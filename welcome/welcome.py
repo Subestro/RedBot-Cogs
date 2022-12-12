@@ -6,13 +6,14 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from redbot.core.bot import Red
 from redbot.core import commands
+from inflect import ordinal
 
 class welcome(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.welcome_channel = None
 
-            # Load the welcome channel from the JSON file
+        # Load the welcome channel from the JSON file
         try:
             with open("welcome_channel.json", "r") as f:
                 data = json.load(f)
@@ -21,7 +22,7 @@ class welcome(commands.Cog):
         except (FileNotFoundError, KeyError):
             pass
 
-        # set the channel for the welcome message and update the JSON file
+    # set the channel for the welcome message and update the JSON file
     @commands.command()
     async def setchannel(self, ctx, channel: discord.TextChannel):
         """Sets the channel where the bot will send the welcome message."""
@@ -30,10 +31,10 @@ class welcome(commands.Cog):
 
         # Save the welcome channel to the JSON file
         with open("welcome_channel.json", "w") as f:
-             data = {"welcome_channel": self.welcome_channel.id}
-             json.dump(data, f)
+            data = {"welcome_channel": self.welcome_channel.id}
+            json.dump(data, f)
 
-        # unset the channel for the welcome message and update the JSON file
+    # unset the channel for the welcome message and update the JSON file
     @commands.command()
     async def unsetchannel(self, ctx):
         """Unsets the channel where the bot will send the welcome message."""
@@ -42,8 +43,8 @@ class welcome(commands.Cog):
 
         # Save the updated welcome channel to the JSON file after it has been unset
         with open("welcome_channel.json", "w") as f:
-             data = {"welcome_channel": self.welcome_channel}
-             json.dump(data, f)
+            data = {"welcome_channel": self.welcome_channel}
+            json.dump(data, f)
 
     @Cog.listener()
     async def on_red_event(self):
