@@ -1,13 +1,19 @@
 {
     "name": "welcome",
-    "author": ["Subestro"],
-    "description": "A cog that sends a welcome message when a new member joins the server.",
-    "version": "1.0.0",
+    "author": "Subestro",
+    "description": "Sends a welcome message to new members who join the server.",
+    "install_msg": "The welcome cog has been installed successfully. Use the **`setchannel`** and **`unsetchannel`** commands to set or unset the channel for the welcome message.",
     "commands": [
-        {
-            "name": "setchannel",
-            "description": "Sets the channel where the bot will send the welcome message.",
-            "usage": "!setchannel <channel>"
-        }
+      {
+        "name": "setchannel",
+        "description": "Sets the channel where the bot will send the welcome message.",
+        "usage": "!setchannel [channel]"
+      },
+      {
+        "name": "unsetchannel",
+        "description": "Unsets the channel where the bot will send the welcome message.",
+        "usage": "!unsetchannel"
+      }
     ]
-}
+  }
+  
