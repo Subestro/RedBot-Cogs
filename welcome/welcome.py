@@ -95,7 +95,7 @@ class welcome(commands.Cog):
 
         # Download the user's profile picture and the welcome image
         profile_picture_url = str(member.avatar_url_as(format="png"))
-        welcome_image_url = "https://raw.githubusercontent.com/PythonMC/subnet/master/welcome/welcome.png"
+        welcome_image_url = "https://raw.githubusercontent.com/Subestro/RedBot-Cogs/main/welcome/img/welcome.png"
         profile_picture = Image.open(BytesIO(requests.get(profile_picture_url).content))
         welcome_image = Image.open(BytesIO(requests.get(welcome_image_url).content))
 
@@ -111,7 +111,7 @@ class welcome(commands.Cog):
         welcome_image.paste(profile_picture, profile_picture_offset, profile_picture)
 
         # Add the text "WELCOME!" to the welcome image
-        font_url = "https://raw.githubusercontent.com/hattvr/Welcomer-Bot/master/attributes/Fonts/Gotham-Black.otf"
+        font_url = "https://raw.githubusercontent.com/Subestro/RedBot-Cogs/main/welcome/font/Gotham-Black.otf"
         font = ImageFont.truetype(BytesIO(requests.get(font_url).content), size=100)
         draw = ImageDraw.Draw(welcome_image)
         welcome_text = "WELCOME!"
