@@ -6,13 +6,14 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from redbot.core.bot import Red
 from redbot.core import commands
+from inflect import ordinal
 
 class welcome(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.welcome_channel = None
 
-            # Load the welcome channel from the JSON file
+        # Load the welcome channel from the JSON file
         try:
             with open("welcome_channel.json", "r") as f:
                 data = json.load(f)
