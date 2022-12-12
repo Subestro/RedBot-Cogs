@@ -128,7 +128,7 @@ class welcome(commands.Cog):
         text_width, text_height = draw.textsize(member_count_text, font=font)
         #text_position = ((welcome_image_width - text_width) // 2, text_position[1] + text_height)
         text_position = ((welcome_image_width - text_width) // 2, welcome_image_height - text_height - 70)
-        draw.text(text_position, member_count_text, fill=(255, 255, 255), font=font)
+        draw.text(text_position, member_count_text, fill=(215, 219, 221), font=font)
 
         # Attach the updated welcome image to the message
         file = BytesIO()
