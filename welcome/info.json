@@ -1,0 +1,13 @@
+{
+    "name": "welcome",
+    "author": ["SubNet"],
+    "description": "A cog that sends a welcome message when a new member joins the server.",
+    "version": "1.0.0",
+    "commands": [
+        {
+            "name": "setchannel",
+            "description": "Sets the channel where the bot will send the welcome message.",
+            "usage": "!setchannel <channel>"
+        }
+    ]
+}
