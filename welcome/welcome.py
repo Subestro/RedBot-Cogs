@@ -22,7 +22,7 @@ class welcome(commands.Cog):
         except (FileNotFoundError, KeyError):
             pass
 
-        # set the channel for the welcome message and update the JSON file
+    # set the channel for the welcome message and update the JSON file
     @commands.command()
     async def setchannel(self, ctx, channel: discord.TextChannel):
         """Sets the channel where the bot will send the welcome message."""
@@ -31,10 +31,10 @@ class welcome(commands.Cog):
 
         # Save the welcome channel to the JSON file
         with open("welcome_channel.json", "w") as f:
-             data = {"welcome_channel": self.welcome_channel.id}
-             json.dump(data, f)
+            data = {"welcome_channel": self.welcome_channel.id}
+            json.dump(data, f)
 
-        # unset the channel for the welcome message and update the JSON file
+    # unset the channel for the welcome message and update the JSON file
     @commands.command()
     async def unsetchannel(self, ctx):
         """Unsets the channel where the bot will send the welcome message."""
@@ -43,8 +43,8 @@ class welcome(commands.Cog):
 
         # Save the updated welcome channel to the JSON file after it has been unset
         with open("welcome_channel.json", "w") as f:
-             data = {"welcome_channel": self.welcome_channel}
-             json.dump(data, f)
+            data = {"welcome_channel": self.welcome_channel}
+            json.dump(data, f)
 
     @Cog.listener()
     async def on_red_event(self):
@@ -94,6 +94,11 @@ class welcome(commands.Cog):
         channel = self.welcome_channel
         await channel.send(f"Welcome to the server, {member.mention}!")
 
+        # Get the member count
+        member_count = member.guild.member_count
+        # Convert the member count to its ordinal form
+        member_count_ordinal = ordinal(member_count)
+
         # Download the user's profile picture and the welcome image
         profile_picture_url = str(member.avatar_url_as(format="png"))
         welcome_image_url = "https://raw.githubusercontent.com/Subestro/RedBot-Cogs/main/welcome/img/welcome.png"
@@ -123,7 +128,7 @@ class welcome(commands.Cog):
         # Add the member count to the welcome image
         font = ImageFont.truetype(BytesIO(requests.get(font_url).content), size=42)
         member_count = len(member.guild.members)
-        member_count_text = f"You are the {member_count} user"
+        member_count_text = f"You are the {member_count_ordinal} user"
         text_width, text_height = draw.textsize(member_count_text, font=font)
         #text_position = ((welcome_image_width - text_width) // 2, text_position[1] + text_height)
         text_position = ((welcome_image_width - text_width) // 2, welcome_image_height - text_height - 70)
