@@ -2,6 +2,7 @@
     "name": "welcome",
     "author": ["Subestro"],
     "description": "Sends a welcome message to new members who join the server.",
+    "version": "1.0.0",
     "install_msg": "The welcome cog has been installed successfully. Use the **`setchannel`** and **`unsetchannel`** commands to set or unset the channel for the welcome message.",
     "commands": [
       {
