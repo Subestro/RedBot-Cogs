@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from redbot.core.bot import Red
 from redbot.core import commands
+from inflect import engine
 
 class welcome(commands.Cog):
     def __init__(self, bot: Red):
@@ -74,7 +75,8 @@ class welcome(commands.Cog):
     async def on_member_join(self, member):
         # Define the server_owner variable and set its initial value to None
         server_owner = None
-
+        # Create an instance of the engine class
+        inflector = engine()
         # Check if the welcome channel is set
         if self.welcome_channel is None:
 
@@ -122,7 +124,7 @@ class welcome(commands.Cog):
         # Add the member count to the welcome image
         font = ImageFont.truetype(BytesIO(requests.get(font_url).content), size=42)
         member_count = len(member.guild.members)
-        member_count_text = f"You are the {member_count}th user"
+        member_count_text = f"You are the {inflector.ordinal(member_count)} user"
         text_width, text_height = draw.textsize(member_count_text, font=font)
         #text_position = ((welcome_image_width - text_width) // 2, text_position[1] + text_height)
         text_position = ((welcome_image_width - text_width) // 2, welcome_image_height - text_height - 70)
