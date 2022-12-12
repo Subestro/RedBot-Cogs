@@ -29,6 +29,11 @@ class welcome(commands.Cog):
         self.welcome_channel = channel
         await ctx.send(f"Welcome channel set to {channel.mention}.")
 
+    # Save the welcome channel to the JSON file
+    with open("welcome_channel.json", "w") as f:
+        data = {"welcome_channel": self.welcome_channel.id}
+        json.dump(data, f)
+
         # Save the welcome channel to the JSON file
         with open("welcome_channel.json", "w") as f:
             data = {"welcome_channel": self.welcome_channel.id}
