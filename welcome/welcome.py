@@ -7,7 +7,6 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from redbot.core.bot import Red
 from redbot.core import commands
 from inflect import engine
-from textwrap import fill
 
 class welcome(commands.Cog):
     def __init__(self, bot: Red):
@@ -125,8 +124,7 @@ class welcome(commands.Cog):
         # Add the member count to the welcome image
         font = ImageFont.truetype(BytesIO(requests.get(font_url).content), size=42)
         member_count = len(member.guild.members)
-        member_count_text = f"You are the {inflector.ordinal(member_count)} user"
-        member_count_text = fill(member_count_text, initial_indent="", subsequent_indent="", width=len(member_count_text), placeholder="______")
+        member_count_text = f"You are the \_{inflector.ordinal(member_count)}\_ user"
         text_width, text_height = draw.textsize(member_count_text, font=font)
         #text_position = ((welcome_image_width - text_width) // 2, text_position[1] + text_height)
         text_position = ((welcome_image_width - text_width) // 2, welcome_image_height - text_height - 70)
