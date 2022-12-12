@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from redbot.core.bot import Red
 from redbot.core import commands
 from inflect import ordinal
+from dataclasses import dataclass
 
 class welcome(commands.Cog):
     def __init__(self, bot: Red):
