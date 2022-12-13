@@ -3,10 +3,7 @@ import requests
 from redbot.core import commands
 import trakt
 
-class RTrakt(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.trakt_client_id = "YOUR_TRAKT_CLIENT_ID"
+
 class RTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
