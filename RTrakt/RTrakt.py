@@ -1,25 +1,24 @@
-# Import necessary libraries
 import discord
 import requests
 from redbot.core import commands
 import trakt
 
-# Set up the Trakt API client
-trakt.init("YOUR_TRAKT_CLIENT_ID", "YOUR_TRAKT_CLIENT_SECRET")
-
-# Set the IMDb API key
-API_KEY = "YOUR_IMDB_API_KEY"
-
 class RTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # Set the Trakt client ID to an empty string initially
-        self.trakt_client_id = ""
+        self.trakt_client_id = "YOUR_TRAKT_CLIENT_ID"
+
+    @commands.command()
+    async def set_trakt_client_id(self, ctx, client_id: str):
+        self.trakt_client_id = client_id
 
     @commands.Cog.listener()
     async def on_ready(self):
-        # Initialize the Trakt client with the user's client ID
+        # Set up the Trakt API client
         trakt.init(self.trakt_client_id, "YOUR_TRAKT_CLIENT_SECRET")
+
+        # Set the IMDb API key
+        API_KEY = "YOUR_IMDB_API_KEY"
 
         # Get the current user's Trakt account information
         user = trakt.users.me()
@@ -44,5 +43,3 @@ class RTrakt(commands.Cog):
 
 def setup(bot):
     bot.add_cog(RTrakt(bot))
-
-
