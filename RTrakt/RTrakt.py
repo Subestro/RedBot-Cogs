@@ -7,19 +7,24 @@ class RTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.trakt_client_id = "YOUR_TRAKT_CLIENT_ID"
+class RTrakt(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.trakt_client_id = "YOUR_TRAKT_CLIENT_ID"
+        self.trakt_client_secret = "YOUR_TRAKT_CLIENT_SECRET"
+        self.imdb_api_key = "API_KEY"
 
     @commands.command()
-    async def set_trakt_client_id(self, ctx, client_id: str):
+    async def settrakt(self, ctx, client_id: str):
         self.trakt_client_id = client_id
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        # Set up the Trakt API client
-        trakt.init(self.trakt_client_id, "YOUR_TRAKT_CLIENT_SECRET")
+    @commands.command()
+    async def setsecret(self, ctx, client_secret: str):
+        self.trakt_client_secret = client_secret
 
-        # Set the IMDb API key
-        API_KEY = "YOUR_IMDB_API_KEY"
-
+    @commands.command()
+    async def setimdb(self, ctx, api_key: str):
+        self.imdb_api_key = api_key
         # Get the current user's Trakt account information
         user = trakt.users.me()
 
