@@ -13,9 +13,14 @@ API_KEY = "YOUR_IMDB_API_KEY"
 class RTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        # Set the Trakt client ID to an empty string initially
+        self.trakt_client_id = ""
 
     @commands.Cog.listener()
     async def on_ready(self):
+        # Initialize the Trakt client with the user's client ID
+        trakt.init(self.trakt_client_id, "YOUR_TRAKT_CLIENT_SECRET")
+
         # Get the current user's Trakt account information
         user = trakt.users.me()
 
@@ -39,3 +44,5 @@ class RTrakt(commands.Cog):
 
 def setup(bot):
     bot.add_cog(RTrakt(bot))
+
+
