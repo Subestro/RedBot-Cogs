@@ -14,15 +14,15 @@ class RTrakt(commands.Cog):
         self.trakt_client_secret = "YOUR_TRAKT_CLIENT_SECRET"
         self.imdb_api_key = "API_KEY"
 
-    @commands.command()
+    @commands.command(help="Set the Trakt API client ID")
     async def settrakt(self, ctx, client_id: str):
         self.trakt_client_id = client_id
 
-    @commands.command()
+    @commands.command(help="Set the Trakt API client secret")
     async def setsecret(self, ctx, client_secret: str):
         self.trakt_client_secret = client_secret
 
-    @commands.command()
+    @commands.command(help="Set the IMDb API key")
     async def setimdb(self, ctx, api_key: str):
         self.imdb_api_key = api_key
         # Get the current user's Trakt account information
