@@ -49,7 +49,7 @@ To install a cog, use this command, replacing <cog> with the name of the cog you
   Example
 ------------
   
-   .. image:: https://media.discordapp.net/attachments/1050985251058503750/1052473949956620328/welcome.png
+   .. image:: https://i.imgur.com/yzaOSzI.png
 
    This cog was inspired by `Welcome-Bot <https://github.com/hattvr/Welcomer-Bot>`_.
 
