@@ -53,4 +53,4 @@ To install a cog, use this command, replacing <cog> with the name of the cog you
 
    This cog was inspired by `Welcome-Bot <https://github.com/hattvr/Welcomer-Bot>`_.
 
-   NOTE: If the welcome channel hasn't been set or if the server owner's account has been deleted, the bot will send a message to the server owner reminding them to set the welcome channel.
+   NOTE: If the welcome channel hasn't been set, the bot will send a message to the server owner reminding them to set the welcome channel.
