@@ -1,29 +1,35 @@
+Welcome Discord Bot
+===================
 
-Redbot cogs for Red-DiscordBot V3
-================================================
+This is a Discord bot that sends a welcome message to a specified channel when a new user joins the server.
 
-This is my cog repo for the redbot, a multifunctional Discord bot!
+Getting Started
+---------------
 
-------------
-Installation
-------------
+To use this bot, you will need to have a Discord account and create a bot by following the instructions `here <https://discordpy.readthedocs.io/en/latest/discord.html>`_.
 
-Primarily, make sure you have `downloader` loaded.
+.. admonition:: Usage
 
-.. code-block:: ini
+   To set the channel for the welcome message, use the ``!setchannel`` command followed by the name of the channel you want to set.
 
-    [p]load downloader
+   .. code-block:: shell
 
-Next, let's add my repository to your system.
+       !setchannel #welcome-channel
 
-.. code-block:: ini
+   To unset the channel for the welcome message, use the ``!unsetchannel`` command.
 
-    [p]repo add Subestro https://github.com/Subestro/RedBot-Cogs
+   .. code-block:: shell
 
-To install a cog, use this command, replacing <cog> with the name of the cog you wish to install:
+       !unsetchannel
 
-.. code-block:: ini
+Notes
+-----
 
-    [p]cog install Subestro <cog>
-    
-    (ex !cog install Subestro welcome)
+If the welcome channel hasn't been set or if the server owner's account has been deleted, the bot will send a message to the server owner reminding them to set the welcome channel.
+
+The bot will also send a list of the currently loaded cogs to the server owner.
+
+License
+-------
+
+This project is licensed under the MIT License - see the `LICENSE <LICENSE>`_ file for details.
