@@ -29,9 +29,8 @@ To install a cog, use this command, replacing <cog> with the name of the cog you
 -------------------
 📝Cogs list
 -------------------
-
-.. admonition:: Welcome
-
+.. admonition:: **Welcome**
+  
    This cog sends a welcome message with the user's profile picture and a generated welcome image that includes the current member count to a specified channel whenever a new user joins the server.
 
    To set the channel for the welcome message, use the ``!setchannel`` command followed by the name of the channel you want to set.
@@ -45,6 +44,12 @@ To install a cog, use this command, replacing <cog> with the name of the cog you
    .. code-block:: shell
 
        !unsetchannel
+     
+------------
+  Example
+------------
+  
+   .. image:: https://media.discordapp.net/attachments/1050985251058503750/1052473949956620328/welcome.png
 
    This cog was inspired by `Welcome-Bot <https://github.com/hattvr/Welcomer-Bot>`_.
 
