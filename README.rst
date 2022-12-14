@@ -31,7 +31,7 @@ To install a cog, use this command, replacing <cog> with the name of the cog you
 -------------------
 .. admonition:: **Welcome**
   
-   This cog sends a welcome message with the user's profile picture and a generated welcome image that includes the current member count to a specified channel whenever a new user joins the server.
+   This cog sends a welcome message with generated welcome image that includes the new user profile picture & current member count to a specified channel.
 
    To set the channel for the welcome message, use the ``!setchannel`` command followed by the name of the channel you want to set.
 
