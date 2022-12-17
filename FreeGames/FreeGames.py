@@ -58,3 +58,6 @@ class FreeGames(commands.Cog):
             await ctx.send(message)
         else:
             await ctx.send("No free games could be found.")
+
+def setup(bot):
+    bot.add_cog(FreeGames(bot))
