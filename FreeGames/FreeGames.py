@@ -5,7 +5,7 @@ from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
 
 class Game:
-    def __init__(self, name, url):
+    def __init__(self, name, url, poster_url):
         self.name = name
         self.url = url
         self.poster_url = poster_url
