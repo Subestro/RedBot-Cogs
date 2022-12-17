@@ -19,19 +19,21 @@ class FreeGames(commands.Cog):
         # Check if the request was successful
         if response.status_code == 200:
             # Parse the response data to get the list of free games
-            # The exact way to do this will depend on the structure of the data returned by the API
-            # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
             free_games = response.json()
-        
+
             if free_games:  # If there are free games available
-                message = "There is a free game available on Epic Games right now!"
-                first_free_game = free_games[0]
-                poster_url = first_free_game['posterUrl']
-                await ctx.send(f"There is a free game available on Epic Games right now!\n{poster_url}")
+                # Extract the image URL from the response data
+                image_url = free_games[0]['image']
+
+                # Create an Embed object
+                embed = discord.Embed()
+                embed.set_image(url=image_url)
+
+                # Send the Embed object as the message
+                await ctx.send(embed=embed)
             else:  # If there are no free games available
                 message = "There are no free games available on Epic Games right now."
-        
-            await ctx.send(message)
+                await ctx.send(message)
         else:
             # If the request was not successful, handle the error
             print(f"API request failed with status code {response.status_code}")
