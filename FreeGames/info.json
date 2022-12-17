@@ -1,0 +1,7 @@
+{
+    "name": "FreeGames",
+    "author": ["Subestro"],
+    "version": "1.0.0",
+    "short": "Check for free games on Epic Games",
+    "dependencies": []
+}
