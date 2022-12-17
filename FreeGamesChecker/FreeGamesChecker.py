@@ -1,3 +1,5 @@
+from redbot.core import commands
+from redbot.core.bot import Red
 import discord
 from discord.ext import commands
 import requests
