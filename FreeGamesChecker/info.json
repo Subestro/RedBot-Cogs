@@ -1,8 +1,9 @@
 {
     "name": "FreeGameChecker",
-    "author": "Subestro",
+    "author": ["Subestro"],
     "short": "A Discord bot that checks for free games and sends notifications.",
     "version": "1.0.0",
+    "installed_msg": "Thank you for installing the FreeGameChecker bot! Use the 'fg' command to enable free games notifications.",
     "commands": [
         {
             "name": "fg",
