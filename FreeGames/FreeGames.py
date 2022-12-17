@@ -4,6 +4,11 @@ import requests
 from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
 
+class Game:
+    def __init__(self, name, url):
+        self.name = name
+        self.url = url
+        
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
