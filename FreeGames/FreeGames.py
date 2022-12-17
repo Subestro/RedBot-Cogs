@@ -55,14 +55,11 @@ class FreeGames(commands.Cog):
         # Get the list of free games
         free_games = process_request(make_request())
 
-        # Send the list of free games in the channel
+        # Send the list of free games in an embed
         if free_games:
-            message = "Here are the current free games on Epic Games:\n"
+            embed = discord.Embed(title="Current free games on Epic Games", color=0x00FF00)
             for game in free_games:
-                message += f" - {game.name}: {game.url}\n"
-            await ctx.send(message)
+                embed.add_field(name=game.name, value=game.url, inline=False)
+            await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
-
-def setup(bot):
-    bot.add_cog(FreeGames(bot))
