@@ -21,10 +21,13 @@ class FreeGamesChecker(commands.Cog):
 
     @commands.command(name='tfg', description='Test whether free games notifications are enabled and working.')
     async def testfreegames(self, ctx):
-        if self.channel:
-            await ctx.send("Free games notifications are enabled and working!")
+        if not self.free_games:  # if the list of free games is empty
+            await ctx.send("No free games are currently available.")
         else:
-            await ctx.send("Free games notifications are disabled or not set up.")
+            message = "Free games:\n"
+            for game in self.free_games:
+                message += f"- {game}\n"
+            await ctx.send(message)
 
     @commands.Cog.listener()
     async def on_ready(self):
