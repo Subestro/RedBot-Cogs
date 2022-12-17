@@ -1,0 +1,20 @@
+{
+    "name": "FreeGameChecker",
+    "author": "Subestro",
+    "short": "A Discord bot that checks for free games and sends notifications.",
+    "version": "1.0.0",
+    "commands": [
+        {
+            "name": "fg",
+            "description": "Enable free games notifications for the specified channel."
+        },
+        {
+            "name": "sfg",
+            "description": "Disable free games notifications."
+        },
+        {
+            "name": "tfg",
+            "description": "Test whether free games notifications are enabled and working."
+        }
+    ]
+}
