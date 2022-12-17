@@ -66,6 +66,3 @@ class FreeGames(commands.Cog):
         else:
             # If it hasn't been more than 24 hours since the last time we checked, do nothing
             pass
-
-def setup(bot):
-    bot.add_cog(FreeGames(bot))
