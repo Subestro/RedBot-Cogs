@@ -2,16 +2,16 @@ import discord
 from discord.ext import commands
 import requests
 
-class FreeGamesCheck(commands.Cog):
+class FreeGamesChecker(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.free_games = []
         self.channel = None
 
-    @commands.command(name='fg', description='Enable free games notifications for the specified channel.')
+    @commands.command(name='fg', description='!fg #channel-name to enable free games notifications.')
     async def freegames(self, ctx, channel: discord.TextChannel):
         self.channel = channel
-        await ctx.send("Free games notifications enabled!")
+        await ctx.send("Free games notification channel has been set & enabled!")
 
     @commands.command(name='sfg', description='Disable free games notifications.')
     async def stopfreegames(self, ctx):
