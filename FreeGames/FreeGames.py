@@ -19,12 +19,21 @@ class FreeGames(commands.Cog):
         # Check if the request was successful
         if response.status_code == 200:
             # Parse the response data to get the list of free games
-            # The exact way to do this will depend on the structure of the data returned by the API
-            # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
             free_games = response.json()
         
             if free_games:  # If there are free games available
-                message = "There is a free game available on Epic Games right now!"
+            # Extract the name and price information for the first free game from the list
+                game_name = free_games[0]["name"]
+                original_price = free_games[0]["price"]
+                current_price = 0  # Free games have a current price of 0
+
+                # Create the embed object
+                embed = discord.Embed(title=f"**{game_name}**")
+                # Set the original price field
+                embed.add_field(name="Original price", value=f"~~{original_price}~~", inline=True)
+                # Set the current price field
+                embed.add_field(name="Current price", value=f"**{current_price}**", inline=True)
+                
             else:  # If there are no free games available
                 message = "There are no free games available on Epic Games right now."
         
