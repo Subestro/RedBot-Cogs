@@ -1,35 +1,60 @@
 import discord
-from redbot.core import commands
+import json
 import requests
+from requests.exceptions import HTTPError, Timeout
+from redbot.core import commands, checks
 
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.SERVICE_NAME = "Epic Games"
+        self.MODULE_ID = "epic"
+        self.AUTHOR = "Default"
+        self.URL = "https://www.epicgames.com/store/us-US/product/"
+        self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country" \
+                        "=ES&allowCountries=ES"
 
     @commands.command()
-    async def freegame(self, ctx):
-        # Send a GET request to the URL
-        response = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-US&country=US&allowCountries=US")
+    async def get_free_games(self, ctx):
+        def make_request():
+            """Makes the request and removes the unnecessary JSON data."""
+            try:
+                raw_data = requests.get(self.ENDPOINT)
+                raw_data = json.loads(raw_data.content)  # Bytes to json object
+                raw_data = raw_data["data"]["Catalog"]["searchStore"]["elements"]  # Cleans the data
+                return raw_data
+            except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
+                logger.error(f"Request to {self.SERVICE_NAME} by module \'{self.MODULE_ID}\' failed")
+                return False
 
-        # Check if the request was successful
-        if response.status_code == 200:
-            # Retrieve the data from the response
-            data = response.json()
+        def process_request(raw_data):
+            """Returns a list of free games from the raw data."""
+            processed_data = []
 
-            # Get the name of the free game
-            game_name = data["data"]["Catalog"]["searchStore"]["elements"][0]["title"]["displayValue"]
+            if not raw_data:
+                return False
+            try:
+                for i in raw_data:
+                    # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
+                    try:
+                        if i["promotions"]["promotionalOffers"]:
+                            game = Game(i["title"], str(self.URL + i["productSlug"]))
+                            processed_data.append(game)
+                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
+                        pass
+            except KeyError:
+                logger.exception(f"Data from module \'{self.MODULE_ID}\' couldn't be processed")
 
-            # Create an embed message with the free game information
-            embed = discord.Embed(title=f"Current free game: {game_name}", color=discord.Color.green())
-            embed.set_thumbnail(url=data["data"]["Catalog"]["searchStore"]["elements"][0]["keyImages"][0]["url"])
-            embed.add_field(name="Description", value=data["data"]["Catalog"]["searchStore"]["elements"][0]["description"]["displayValue"], inline=False)
-            embed.set_footer(text="Information provided by Epic Games Store")
+            return processed_data
 
-            # Send the embed message
-            await ctx.send(embed=embed)
+        # Get the list of free games
+        free_games = process_request(make_request())
+
+        # Send the list of free games in the channel
+        if free_games:
+            message = "Here are the current free games on Epic Games:\n"
+            for game in free_games:
+                message += f" - {game.name}: {game.url}\n"
+            await ctx.send(message)
         else:
-            # If the request was not successful, send an error message
-            await ctx.send("An error occurred while retrieving the free game information.")
-
-def setup(bot):
-    bot.add_cog(FreeGames(bot))
+            await ctx.send("No free games could be found.")
