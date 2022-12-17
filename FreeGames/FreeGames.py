@@ -14,7 +14,7 @@ class FreeGames(commands.Cog):
     async def fgc(self, ctx):
         """Checks if there is a free game available on Epic Games."""
         # Make a request to the Epic Games API to get the list of free games
-        response = requests.get("https://www.epicgames.com/store/api/freeGamesPromotion")
+        response = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES")
         
         # Check if the request was successful
         if response.status_code == 200:
@@ -50,7 +50,7 @@ class FreeGames(commands.Cog):
             await self.config.last_free_game_check.set(current_time)
             
             # Make a request to the Epic Games API to get the list of free games
-            response = requests.get("https://www.epicgames.com/store/api/freeGamesPromotion")
+            response = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES")
             
             # Check if the request was successful
             if response.status_code == 200:
