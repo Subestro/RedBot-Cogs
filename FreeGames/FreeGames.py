@@ -25,6 +25,9 @@ class FreeGames(commands.Cog):
         
             if free_games:  # If there are free games available
                 message = "There is a free game available on Epic Games right now!"
+                first_free_game = free_games[0]
+                poster_url = first_free_game['posterUrl']
+                await ctx.send(f"There is a free game available on Epic Games right now!\n{poster_url}")
             else:  # If there are no free games available
                 message = "There are no free games available on Epic Games right now."
         
