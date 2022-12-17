@@ -43,7 +43,7 @@ class FreeGames(commands.Cog):
                     # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
                     try:
                         if i["promotions"]["promotionalOffers"]:
-                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][0]["url"])
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"])
                             processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
                         pass
