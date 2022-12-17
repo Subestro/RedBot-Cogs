@@ -1,32 +1,35 @@
-import requests
-from bs4 import BeautifulSoup
+import discord
 from redbot.core import commands
+import requests
 
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
-    def get_current_free_game(self):
-        # Make an HTTP GET request to the "Free Game" section of the Epic Store website
-        url = "https://store.epicgames.com/en-US/"
-        response = requests.get(url)
 
-        # Parse the HTML content of the response
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # Find the element containing the current free game information
-        free_game_element = soup.find("div", class_="FrontpageFreeGame-sc-1rv5z5d-0 fjrIxl")
-
-        # Extract the name and release date of the current free game
-        name = free_game_element.find("h3").text
-        release_date = free_game_element.find("div", class_="FrontpageFreeGame__EndDate-sc-1rv5z5d-2 kBwIHW").text
-
-        return (name, release_date)
-    
     @commands.command()
-    async def current_free_game(self, ctx):
-        name, release_date = self.get_current_free_game()
-        await ctx.send(f"The current free game on the Epic Store is {name}, available until {release_date}.")
+    async def freegame(self, ctx):
+        # Send a GET request to the URL
+        response = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-US&country=US&allowCountries=US")
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Retrieve the data from the response
+            data = response.json()
+
+            # Get the name of the free game
+            game_name = data["data"]["Catalog"]["searchStore"]["elements"][0]["title"]["displayValue"]
+
+            # Create an embed message with the free game information
+            embed = discord.Embed(title=f"Current free game: {game_name}", color=discord.Color.green())
+            embed.set_thumbnail(url=data["data"]["Catalog"]["searchStore"]["elements"][0]["keyImages"][0]["url"])
+            embed.add_field(name="Description", value=data["data"]["Catalog"]["searchStore"]["elements"][0]["description"]["displayValue"], inline=False)
+            embed.set_footer(text="Information provided by Epic Games Store")
+
+            # Send the embed message
+            await ctx.send(embed=embed)
+        else:
+            # If the request was not successful, send an error message
+            await ctx.send("An error occurred while retrieving the free game information.")
 
 def setup(bot):
     bot.add_cog(FreeGames(bot))
