@@ -1,4 +1,6 @@
 import discord
+import time
+import requests
 from redbot.core import commands, checks, Config
 
 class FreeGames(commands.Cog):
@@ -12,9 +14,12 @@ class FreeGames(commands.Cog):
     async def fgc(self, ctx):
         """Checks if there is a free game available on Epic Games."""
         # Make a request to the Epic Games API to get the list of free games
-        # The API endpoint we'll need to use is https://www.epicgames.com/store/api/freeGamesPromotion
-        # You'll need to use the requests library to make an HTTP GET request to this endpoint
-        # I'll leave this part up to you, as it will depend on how you want to handle API requests in your bot
+        response = requests.get("https://www.epicgames.com/store/api/freeGamesPromotion")
+        
+        # Parse the response data to get the list of free games
+        # The exact way to do this will depend on the structure of the data returned by the API
+        # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
+        free_games = response.json()
         
         if free_games:  # If there are free games available
             message = "There is a free game available on Epic Games right now!"
@@ -38,22 +43,25 @@ class FreeGames(commands.Cog):
             # If it has been more than 24 hours, update the last_free_game_check time in the config
             await self.config.last_free_game_check.set(current_time)
             
-            # Now, we'll need to make a request to the Epic Games API to get the list of free games
-            # The API endpoint we'll need to use is https://www.epicgames.com/store/api/freeGamesPromotion
-            # You'll need to use the requests library to make an HTTP GET request to this endpoint
-            # I'll leave this part up to you, as it will depend on how you want to handle API requests in your bot
-            # Once you have the list of free games, you can loop through them and send a notification for each one
-            # Here's an example of how you could send a notification for a free game:
+            # Make a request to the Epic Games API to get the list of free games
+            response = requests.get("https://www.epicgames.com/store/api/freeGamesPromotion")
             
-            # Get the channel to send the notification to from the config
-            notification_channel_id = await self.config.notification_channel()
-            notification_channel = self.bot.get_channel(notification_channel_id)
+            # Parse the response data to get the list of free games
+            # The exact way to do this will depend on the structure of the data returned by the API
+            # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
+            free_games = response.json()
             
-            # Create the message content
-            message_content = f"A new free game is available on Epic Games: {free_game_name}"
-            
-            # Send the notification
-            await notification_channel.send(message_content)
+            # Loop through the list of free games and send a notification for each one
+            for free_game in free_games:
+                # Get the channel to send the notification to from the config
+                notification_channel_id = await self.config.notification_channel()
+                notification_channel = self.bot.get_channel(notification_channel_id)
+                
+                # Create the message content
+                message_content = f"A new free game is available on Epic Games: {free_game['name']}"
+                
+                # Send the notification
+                await notification_channel.send(message_content)
             
         else:
             # If it hasn't been more than 24 hours since the last time we checked, do nothing
