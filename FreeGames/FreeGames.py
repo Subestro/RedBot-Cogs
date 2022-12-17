@@ -8,6 +8,7 @@ class Game:
     def __init__(self, name, url):
         self.name = name
         self.url = url
+        self.poster_url = poster_url
         
 class FreeGames(commands.Cog):
     def __init__(self, bot):
