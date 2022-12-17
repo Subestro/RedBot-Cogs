@@ -6,8 +6,8 @@ import requests
 class FreeGamesChecker(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.free_games = []
-        self.channel = None
+        self.free_games = []  # list to store the names of free games
+        self.random_games = ["Game 1", "Game 2", "Game 3", "Game 4", "Game 5"]  # list of random games to show
 
     @commands.command(name='fg', description='!fg #channel-name to enable free games notifications.')
     async def freegames(self, ctx, channel: discord.TextChannel):
