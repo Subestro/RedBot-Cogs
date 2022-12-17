@@ -1,4 +1,5 @@
 import discord
+from discord.ext import menus
 import json
 import requests
 from requests.exceptions import HTTPError, Timeout
@@ -61,6 +62,10 @@ class FreeGames(commands.Cog):
                 embed.add_field(name=game.name, value=game.url, inline=False)
                 embed.set_image(url=game.poster_url)
             await ctx.send(embed=embed)
+            for game in free_games:
+                bbutton = discord.Button(game.url, "Get", danger=True)
+                view = discord.View([button])
+                await message.add_reaction(view=view)
         else:
             await ctx.send("No free games could be found.")
             
