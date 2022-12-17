@@ -16,17 +16,23 @@ class FreeGames(commands.Cog):
         # Make a request to the Epic Games API to get the list of free games
         response = requests.get("https://www.epicgames.com/store/api/freeGamesPromotion")
         
-        # Parse the response data to get the list of free games
-        # The exact way to do this will depend on the structure of the data returned by the API
-        # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
-        free_games = response.json()
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the response data to get the list of free games
+            # The exact way to do this will depend on the structure of the data returned by the API
+            # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
+            free_games = response.json()
         
-        if free_games:  # If there are free games available
-            message = "There is a free game available on Epic Games right now!"
-        else:  # If there are no free games available
-            message = "There are no free games available on Epic Games right now."
+            if free_games:  # If there are free games available
+                message = "There is a free game available on Epic Games right now!"
+            else:  # If there are no free games available
+                message = "There are no free games available on Epic Games right now."
         
-        await ctx.send(message)
+            await ctx.send(message)
+        else:
+            # If the request was not successful, handle the error
+            print(f"API request failed with status code {response.status_code}")
+            return
 
     @commands.command()
     @checks.is_owner()
@@ -46,26 +52,28 @@ class FreeGames(commands.Cog):
             # Make a request to the Epic Games API to get the list of free games
             response = requests.get("https://www.epicgames.com/store/api/freeGamesPromotion")
             
-            # Parse the response data to get the list of free games
-            # The exact way to do this will depend on the structure of the data returned by the API
-            # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
-            free_games = response.json()
-            
-            # Loop through the list of free games and send a notification for each one
-            for free_game in free_games:
-                # Get the channel to send the notification to from the config
-                notification_channel_id = await self.config.notification_channel()
-                notification_channel = self.bot.get_channel(notification_channel_id)
+            # Check if the request was successful
+            if response.status_code == 200:
+                # Parse the response data to get the list of free games
+                # The exact way to do this will depend on the structure of the data returned by the API
+                # You may need to refer to the API documentation or use a JSON parsing library to extract the data you need
+                free_games = response.json()
                 
-                # Create the message content
-                message_content = f"A new free game is available on Epic Games: {free_game['name']}"
-                
-                # Send the notification
-                await notification_channel.send(message_content)
-            
+                # Loop through the list of free games and send a notification for each one
+                for free_game in free_games:
+                    # Get the channel to send the notification to from the config
+                    notification_channel_id = await self.config.notification_channel()
+                    notification_channel = self.bot.get_channel(notification_channel_id)
+                    
+                    # Create the message content
+                    message_content = f"A new free game is available on Epic Games: {free_game['name']}"
+                    
+                    # Send the notification
+                    await notification_channel.send(message_content)
+            else:
+                # If the request was not successful, handle the error
+                print(f"API request failed with status code {response.status_code}")
+                return
         else:
             # If it hasn't been more than 24 hours since the last time we checked, do nothing
             pass
-
-def setup(bot):
-    bot.add_cog(FreeGames(bot))
