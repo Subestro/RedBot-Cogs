@@ -1,69 +1,63 @@
-from redbot.core import commands
-from redbot.core.bot import Red
 import discord
-import requests
+from redbot.core import commands, checks, Config
 
-class FreeGamesChecker(commands.Cog):
+class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.free_games = []  # list to store the names of free games
-        self.random_games = ["Game 1", "Game 2", "Game 3", "Game 4", "Game 5"]  # list of random games to show
+        self.config = Config.get_conf(self, identifier=1234567890)
+        default_global = {"last_free_game_check": 0}
+        self.config.register_global(**default_global)
 
-    @commands.command(name='fg', description='!fg #channel-name to enable free games notifications.')
-    async def freegames(self, ctx, channel: discord.TextChannel):
-        self.channel = channel
-        await ctx.send("Free games notification channel has been set & enabled!")
+    @commands.command()
+    async def fgc(self, ctx):
+        """Checks if there is a free game available on Epic Games."""
+        # Make a request to the Epic Games API to get the list of free games
+        # The API endpoint we'll need to use is https://www.epicgames.com/store/api/freeGamesPromotion
+        # You'll need to use the requests library to make an HTTP GET request to this endpoint
+        # I'll leave this part up to you, as it will depend on how you want to handle API requests in your bot
+        
+        if free_games:  # If there are free games available
+            message = "There is a free game available on Epic Games right now!"
+        else:  # If there are no free games available
+            message = "There are no free games available on Epic Games right now."
+        
+        await ctx.send(message)
 
-    @commands.command(name='sfg', description='Disable free games notifications.')
-    async def stopfreegames(self, ctx):
-        self.channel = None
-        await ctx.send("Free games notifications disabled!")
-
-    @commands.command(name='tfg', description='Test whether free games notifications are enabled and working.')
-    async def testfreegames(self, ctx):
-        if not self.free_games:  # if the list of free games is empty
-            await ctx.send("No free games are currently available.")
+    @commands.command()
+    @checks.is_owner()
+    async def fgcnotify(self, ctx):
+        """Checks for new free games on Epic Games and sends a notification to the configured channel."""
+        # First, get the current time
+        current_time = time.time()
+        
+        # Next, get the last time we checked for free games from the config
+        last_free_game_check = await self.config.last_free_game_check()
+        
+        # Check if it's been more than 24 hours since the last time we checked for free games
+        if current_time - last_free_game_check > 86400:  # 86400 seconds = 24 hours
+            # If it has been more than 24 hours, update the last_free_game_check time in the config
+            await self.config.last_free_game_check.set(current_time)
+            
+            # Now, we'll need to make a request to the Epic Games API to get the list of free games
+            # The API endpoint we'll need to use is https://www.epicgames.com/store/api/freeGamesPromotion
+            # You'll need to use the requests library to make an HTTP GET request to this endpoint
+            # I'll leave this part up to you, as it will depend on how you want to handle API requests in your bot
+            # Once you have the list of free games, you can loop through them and send a notification for each one
+            # Here's an example of how you could send a notification for a free game:
+            
+            # Get the channel to send the notification to from the config
+            notification_channel_id = await self.config.notification_channel()
+            notification_channel = self.bot.get_channel(notification_channel_id)
+            
+            # Create the message content
+            message_content = f"A new free game is available on Epic Games: {free_game_name}"
+            
+            # Send the notification
+            await notification_channel.send(message_content)
+            
         else:
-            message = "Free games:\n"
-            for game in self.free_games:
-                message += f"- {game}\n"
-            await ctx.send(message)
+            # If it hasn't been more than 24 hours since the last time we checked, do nothing
+            pass
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        # Retrieve a list of free games from the Epic Store API
-        epic_response = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US")
-        epic_games = epic_response.json()
-
-        # Retrieve a list of free games from the Steam API
-        steam_response = requests.get("http://api.steampowered.com/ISteamApps/GetAppList/v2")
-        steam_games = steam_response.json()['applist']['apps']
-
-        # Filter the Steam games to only include those that are marked as free
-        steam_free_games = [game for game in steam_games if game['price_overview']['discount_percent'] == 100]
-
-        # Retrieve a list of free games from the Uplay API
-        uplay_response = requests.get("https://public-ubiservices.ubi.com/v3/products/offers?platformType=uplay&country=US&language=en-US")
-        uplay_games = uplay_response.json()['offers']
-
-        # Filter the Uplay games to only include those that are marked as free
-        uplay_free_games = [game for game in uplay_games if game['price']['finalPrice'] == 0]
-
-        # Combine the lists of free games from Epic, Steam, and Uplay
-        games = epic_games + steam_free_games + uplay_free_games
-
-        # Check if any new games have become free since the last check
-        new_free_games = [game for game in games if game['title'] not in self.free_games]
-
-        # If there are any new free games, send a message to the configured channel
-        if new_free_games:
-            message = "New free games:\n"
-            for game in new_free_games:
-                # Get the rating and price of the game
-                rating = game.get('rating', 'N/A')
-                price = game.get('price', 'Free')
-                message += f"- {game['title']} ({rating}/100) - {price}\n"
-            await self.channel.send(message)
-
-        # Update the list of free games
-        self.free_games = [game['title'] for game in games]
+def setup(bot):
+    bot.add_cog(FreeGames(bot))
