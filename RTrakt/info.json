@@ -1,6 +1,6 @@
 {
     "name": "RTrakt",
-    "author": "Subestro",
+    "author": ["Subestro"],
     "short": "Updates your Discord rich presence with your currently playing media on Trakt.",
     "install_msg": "To use this cog, you will need to provide your Trakt and IMDb API keys. See the code for more information."
 }
