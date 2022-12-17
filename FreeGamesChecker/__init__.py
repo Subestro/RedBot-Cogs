@@ -1,5 +1,4 @@
-from .FreeGamesChecker import FreeGamesChecker
+from .FreeGames import FreeGames
 
 def setup(bot):
-    cog = FreeGamesChecker(bot)
-    bot.add_cog(cog)
+    bot.add_cog(FreeGames(bot))
