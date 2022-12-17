@@ -59,7 +59,7 @@ class FreeGames(commands.Cog):
             embed = discord.Embed(title="Current free games on Epic Games", color=0x00FF00)
             for game in free_games:
                 embed.add_field(name=game.name, value=game.url, inline=False)
-                embed.set_thumbnail(url=game.poster_url)
+                embed.set_image(url=game.poster_url)
             await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
