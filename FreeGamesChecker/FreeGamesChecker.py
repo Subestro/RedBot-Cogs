@@ -8,18 +8,18 @@ class FreeGamesCheck(commands.Cog):
         self.free_games = []
         self.channel = None
 
-    @commands.command()
-    async def start_free_games_notifications(self, ctx, channel: discord.TextChannel):
+    @commands.command(name='fg', description='Enable free games notifications for the specified channel.')
+    async def freegames(self, ctx, channel: discord.TextChannel):
         self.channel = channel
         await ctx.send("Free games notifications enabled!")
 
-    @commands.command()
-    async def stop_free_games_notifications(self, ctx):
+    @commands.command(name='sfg', description='Disable free games notifications.')
+    async def stopfreegames(self, ctx):
         self.channel = None
         await ctx.send("Free games notifications disabled!")
 
-    @commands.command()
-    async def test_free_games_notifications(self, ctx):
+    @commands.command(name='tfg', description='Test whether free games notifications are enabled and working.')
+    async def testfreegames(self, ctx):
         if self.channel:
             await ctx.send("Free games notifications are enabled and working!")
         else:
@@ -63,4 +63,3 @@ class FreeGamesCheck(commands.Cog):
 
         # Update the list of free games
         self.free_games = [game['title'] for game in games]
-               
