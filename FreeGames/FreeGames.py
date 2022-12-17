@@ -15,29 +15,35 @@ class FreeGames(commands.Cog):
         """Checks if there is a free game available on Epic Games."""
         # Make a request to the Epic Games API to get the list of free games
         response = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES")
-        
+
         # Check if the request was successful
         if response.status_code == 200:
             # Parse the response data to get the list of free games
             free_games = response.json()
-        
-            if free_games:  # If there are free games available
-            # Extract the name and price information for the first free game from the list
-                game_name = free_games[0]["name"]
-                original_price = free_games[0]["price"]
-                current_price = 0  # Free games have a current price of 0
 
-                # Create the embed object
-                embed = discord.Embed(title=f"**{game_name}**")
-                # Set the original price field
-                embed.add_field(name="Original price", value=f"~~{original_price}~~", inline=True)
-                # Set the current price field
-                embed.add_field(name="Current price", value=f"**{current_price}**", inline=True)
-                
-            else:  # If there are no free games available
+            if isinstance(free_games, list) and free_games:  # If free_games is a non-empty list
+                # Extract the name and price information for the first free game from the list
+                game_data = free_games[0]
+                if "name" in game_data and "price" in game_data:  # If the game data has a "name" and "price" key
+                    game_name = game_data["name"]
+                    original_price = game_data["price"]
+                    current_price = 0  # Free games have a current price of 0
+
+                    # Create the embed object
+                    embed = discord.Embed(title=f"**{game_name}**")
+                    # Set the original price field
+                    embed.add_field(name="Original price", value=f"~~{original_price}~~", inline=True)
+                    # Set the current price field
+                    embed.add_field(name="Current price", value=f"**{current_price}**", inline=True)
+
+                    await ctx.send(embed=embed)
+                else:
+                    # If the game data is missing a "name" or "price" key, handle the error
+                    print("Invalid game data: missing name or price key")
+                    return
+            else:  # If free_games is not a list or is an empty list
                 message = "There are no free games available on Epic Games right now."
-        
-            await ctx.send(message)
+                await ctx.send(message)
         else:
             # If the request was not successful, handle the error
             print(f"API request failed with status code {response.status_code}")
