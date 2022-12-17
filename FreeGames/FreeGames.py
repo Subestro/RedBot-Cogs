@@ -30,7 +30,7 @@ class FreeGames(commands.Cog):
                 raw_data = raw_data["data"]["Catalog"]["searchStore"]["elements"]  # Cleans the data
                 return raw_data
             except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
-                logger.error(f"Request to {self.SERVICE_NAME} by module \'{self.MODULE_ID}\' failed")
+                logger.error(f"Request to {self.SERVICE_NAME} by module '{self.MODULE_ID}' failed")
                 return False
 
         def process_request(raw_data):
@@ -41,27 +41,27 @@ class FreeGames(commands.Cog):
                 return False
             try:
                 for i in raw_data:
-                # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
+                    # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
                     try:
                         if i["promotions"]["promotionalOffers"]:
-                        game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][0]["url"])
-                        processed_data.append(game)
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][0]["url"])
+                            processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
-                    pass
-        except KeyError:
-            logger.exception(f"Data from module \'{self.MODULE_ID}\' couldn't be processed")
+                        pass
+            except KeyError:
+                logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
 
-        return processed_data
-    
-    # Get the list of free games
-    free_games = process_request(make_request())
+            return processed_data
+        # Get the list of free games
+        free_games = process_request(make_request())
 
-    # Send the list of free games in an embed
-    if free_games:
-        embed = discord.Embed(title="Current free games on Epic Games", color=0x00FF00)
-        for game in free_games:
-            embed.add_field(name=game.name, value=game.url, inline=False)
-            embed.set_thumbnail(url=game.poster_url)
-        await ctx.send(embed=embed)
-    else:
-        await ctx.send("No free games could be found.")
+        # Send the list of free games in an embed
+        if free_games:
+            embed = discord.Embed(title="Current free games on Epic Games", color=0x00FF00)
+            for game in free_games:
+                embed.add_field(name=game.name, value=game.url, inline=False)
+                embed.set_thumbnail(url=game.poster_url)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("No free games could be found.")
+            
