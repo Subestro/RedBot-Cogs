@@ -35,7 +35,8 @@ class FreeGames(commands.Cog):
         def process_request(raw_data, service_name):
             """Returns a list of free games from the raw data."""
             processed_data = []
-
+            if raw_data is not None:
+                raw_data = json.loads(raw_data.content)
             if not raw_data:
                 return False
             try:
