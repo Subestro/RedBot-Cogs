@@ -55,14 +55,9 @@ class FreeGames(commands.Cog):
         free_games = process_request(make_request())
 
         # Send the list of free games in an embed
-        # Set the text for the first and second lines
-        line1 = "This is the first line"
-        line2 = "game.name"
-        formatted_title = f"{line1}\n" + discord.Text.big(line2)
         if free_games:
             for game in free_games:
-                 #embed = discord.Embed(title=game.name, color=0x00FF00)
-                 embed = discord.Embed(title=formatted_title, color=0x00FF00)
+                 embed = discord.Embed(title=game.name, color=0x00FF00)
             await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
