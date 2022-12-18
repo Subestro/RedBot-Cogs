@@ -1,6 +1,6 @@
 import requests
 import discord
-from redbot.core import commands, checks
+from redbot.core import commands
 
 class FreeGames(commands.Cog):
     def __init__(self, bot):
@@ -9,7 +9,7 @@ class FreeGames(commands.Cog):
     @commands.command()
     async def freegames(self, ctx):
         # Get free games from Humble Bundle
-        humble_url = "https://www.humblebundle.com/store/api/promotions?sort=discount_percent&direction=desc&page=0"
+        humble_url = "https://www.humblebundle.com/store/api/search?sort=discount&filter=onsale&request=1"
         r = requests.get(humble_url)
         humble_data = r.json()
 
@@ -21,7 +21,7 @@ class FreeGames(commands.Cog):
         # Build the message
         message = "Here are the current free games:\n\n"
         message += "**Humble Bundle**\n"
-        for game in humble_data['data']:
+        for game in humble_data['results']:
             if game['discount_price']['amount'] == 0:
                 embed = discord.Embed(title=game['human_name'], description=f"{game['regular_price']['amount']} {game['regular_price']['currency']}", color=0xff0000)
                 embed.add_field(name="\u200b", value="Free")
