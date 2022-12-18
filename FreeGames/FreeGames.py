@@ -46,7 +46,7 @@ class FreeGames(commands.Cog):
                         if i["promotions"]["promotionalOffers"]:
                             game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], i["price"]["totalPrice"]["originalPrice"])
                             processed_data.append(game)
-                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
+                    except TypeError:# This gets executed when ["promotionalOffers"] is empty or does not exist
                         pass
             except KeyError:
                 logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
