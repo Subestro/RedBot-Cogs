@@ -27,7 +27,7 @@ class FreeGames(commands.Cog):
                         # Set the game's name as the title of the embed message
                         embed.title = game['title']
                         # Set the game's poster as the footer of the embed message
-                        embed.set_footer(text=game['keyImages'][1]['url'])
+                        embed.set_footer(text=game['keyImages'][0]['url'])
 
                     # Send the embed message to the channel
                     await ctx.send(embed=embed)
