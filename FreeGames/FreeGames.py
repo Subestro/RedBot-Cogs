@@ -58,7 +58,7 @@ class FreeGames(commands.Cog):
         if free_games:
             for game in free_games:
                  embed = discord.Embed(title=game.name, color=0x00FF00)
-                 embed.add_field(name="Free Game!", value=None, inline=False)
+                 embed.add_field(name="Free Game!", inline=False)
             await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
