@@ -5,12 +5,11 @@ from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
 
 class Game:
-    def __init__(self, name, url, poster_url, original_price, total_price):
+    def __init__(self, name, url, poster_url, original_price):
         self.name = name
         self.url = url
         self.poster_url = poster_url
         self.original_price = original_price
-        self.total_price = total_price
         
 class FreeGames(commands.Cog):
     def __init__(self, bot):
@@ -46,8 +45,7 @@ class FreeGames(commands.Cog):
                     try:
                         if i["promotions"]["promotionalOffers"]:
                             original_price = i["price"]["totalPrice"].get("originalPrice", 0)
-                            total_price = i["price"]["totalPrice"]["discountPrice"]
-                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price, total_price)
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price)
                             processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
                         pass
