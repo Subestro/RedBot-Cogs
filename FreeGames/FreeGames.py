@@ -1,10 +1,9 @@
 import discord
 import json
 import requests
-from discord.ui import Button
 from requests.exceptions import HTTPError, Timeout
+from discord.ui import Button
 from redbot.core import commands, checks
-
 
 class Game:
     def __init__(self, name, url, poster_url, original_price):
@@ -21,7 +20,7 @@ class FreeGames(commands.Cog):
         self.AUTHOR = "Default"
         self.URL = "https://www.epicgames.com/store/us-US/product/"
         self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US"
-
+        
     @commands.command()
     async def get_free_games(self, ctx):
         def make_request():
@@ -33,7 +32,7 @@ class FreeGames(commands.Cog):
                 return raw_data
             except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
                 return False
-                
+
         def process_request(raw_data):
             """Returns a list of free games from the raw data."""
             processed_data = []
