@@ -46,7 +46,7 @@ class FreeGames(commands.Cog):
                         if i["promotions"]["promotionalOffers"]:
                             game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], i["price"]["totalPrice"]["originalPrice"])
                             processed_data.append(game)
-                    except TypeError:# This gets executed when ["promotionalOffers"] is empty or does not exist
+                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
                         pass
             except KeyError:
                 logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
@@ -58,8 +58,8 @@ class FreeGames(commands.Cog):
         # Send the list of free games in an embed
         if free_games:
             for game in free_games:
-                embed = discord.Embed(title=game.name, color=0x00FF00)
-                embed.add_field(name="Price", value=f"~~{game.original_price}~~ FREE")
-                await ctx.send(embed=embed)
+                 embed = discord.Embed(title=game.name, color=0x00FF00)
+                 embed.add_field(name="Price", value=f"~~{game.original_price}~~ FREE")
+            await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
