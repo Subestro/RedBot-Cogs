@@ -51,13 +51,14 @@ class FreeGames(commands.Cog):
                 logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
 
             return processed_data
+
         # Get the list of free games
         free_games = process_request(make_request())
 
         # Send the list of free games in an embed
         if free_games:
             for game in free_games:
-                #embed = discord.Embed(title=game.name, color=0x00FF00)
+                # Create an embed message for the game
                 embed = discord.Embed(color=0x00FF00)
                 embed.add_field(name="Game name", value=game.name, inline=False)
                 embed.set_footer(icon_url=game.poster_url)
