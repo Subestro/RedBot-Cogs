@@ -56,7 +56,7 @@ class FreeGames(commands.Cog):
 
         # Send the list of free games in an embed
         if free_games:
-            embed = discord.Embed(title="Current free games on Epic Games", color=0x00FF00)
+            embed = discord.Embed(title="Free Game!", color=0x00FF00)
             for game in free_games:
                 embed.add_field(name=game.name, value=game.url, inline=False)
                 embed.set_image(url=game.poster_url)
