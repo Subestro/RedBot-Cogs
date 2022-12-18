@@ -1,9 +1,12 @@
 import discord
 import json
 import requests
+import discord.ui
+from discord.ui import Button
 from requests.exceptions import HTTPError, Timeout
 from discord.ui import Button
 from redbot.core import commands, checks
+
 
 class Game:
     def __init__(self, name, url, poster_url, original_price):
