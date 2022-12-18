@@ -59,7 +59,7 @@ class FreeGames(commands.Cog):
             for game in free_games:
                  #embed = discord.Embed(title=game.name, color=0x00FF00)
                  embed = discord.Embed(color=0x00FF00)
-                 embed.add_field(name="Game name", value=game.name, inline=False)
+                 embed.add_field(name=game.name, inline=False)
                  embed.title = "\nFree game from the Epic Games store"
             await ctx.send(embed=embed)
         else:
