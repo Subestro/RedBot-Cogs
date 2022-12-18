@@ -20,6 +20,10 @@ class FreeGames(commands.Cog):
             # Add the list of free games to the embed message
             for game in data['data']['promotions']:
                 embed.add_field(name=game['title'], value=game['description'], inline=False)
+                # Set the game's name as the title of the embed message
+                embed.title = game['title']
+                # Set the game's poster as the footer of the embed message
+                embed.set_footer(text=game['keyImages'][0]['url'])
 
             # Send the embed message to the channel
             await ctx.send(embed=embed)
