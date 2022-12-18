@@ -1,7 +1,6 @@
 import discord
 import json
 import requests
-import discord.ui
 from discord.ui import Button
 from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
