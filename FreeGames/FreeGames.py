@@ -1,79 +1,42 @@
-import discord
-import json
 import requests
-from requests.exceptions import HTTPError, Timeout
-from redbot.core import commands, checks
-
-class Game:
-    def __init__(self, name, url, poster_url):
-        self.name = name
-        self.url = url
-        self.poster_url = poster_url
+import discord
+from discord.ext import commands
 
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.SERVICE_NAME = "Epic Games"
-        self.MODULE_ID = "epic"
-        self.AUTHOR = "Default"
-        self.URL = "https://www.epicgames.com/store/us-US/product/"
-        self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES"
-        self.HUMBLE_BUNDLE_ENDPOINT = "https://www.humblebundle.com/store/api/humblebundle/free"
 
     @commands.command()
-    async def get_free_games(self, ctx):
-        def make_request(endpoint):
-            """Makes the request and removes the unnecessary JSON data."""
-            try:
-                raw_data = requests.get(endpoint)
-                raw_data = json.loads(raw_data.content)  # Bytes to json object
-                return raw_data
-            except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
-                logger.error(f"Request to {self.SERVICE_NAME} by module '{self.MODULE_ID}' failed")
-                return False
+    async def freegames(self, ctx):
+        # Get free games from Humble Bundle
+        humble_url = "https://www.humblebundle.com/store/api/promotions?sort=discount_percent&direction=desc&page=0"
+        r = requests.get(humble_url)
+        humble_data = r.json()
 
-        def process_request(raw_data, service_name):
-            """Returns a list of free games from the raw data."""
-            processed_data = []
-            if raw_data is not None:
-                raw_data = json.loads(raw_data.content)
-            if not raw_data:
-                return False
-            try:
-                if service_name == "Epic Games":
-                    for i in raw_data:
-                        # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
-                        try:
-                            if i["promotions"]["promotionalOffers"]:
-                                game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"])
-                                processed_data.append(game)
-                        except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
-                            pass
-                elif service_name == "Humble Bundle":
-                    for i in raw_data["games"]:
-                        game = Game(i["human_name"], i["url"], i["logo_url"])
-                        processed_data.append(game)
-            except KeyError:
-                logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
+        # Get free games from Epic Games
+        epic_url = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES"
+        r = requests.get(epic_url)
+        epic_data = r.json()
 
-            return processed_data
-        
-        # Get the list of free games from Epic Games Store
-        epic_games_free_games = process_request(make_request(self.ENDPOINT), "Epic Games")
+        # Build the message
+        message = "Here are the current free games:\n\n"
+        message += "**Humble Bundle**\n"
+        for game in humble_data['data']:
+            if game['discount_price']['amount'] == 0:
+                embed = discord.Embed(title=game['human_name'], description=f"{game['regular_price']['amount']} {game['regular_price']['currency']}", color=0xff0000)
+                embed.add_field(name="\u200b", value="Free")
+                embed.set_thumbnail(url="https://www.humblebundle.com/static/humble_bundle_logo_small.png")
+                embed.set_footer(text="Humble Bundle")
+                await ctx.send(embed=embed)
 
-        # Get the list of free games from Humble Bundle
-        humble_bundle_free_games = process_request(make_request(self.HUMBLE_BUNDLE_ENDPOINT), "Humble Bundle")
+        message += "\n**Epic Games**\n"
+        for game in epic_data['data']['Catalog']['searchStore']['elements']:
+            if game['price']['totalPrice']['discountPrice']['amount'] == 0:
+                embed = discord.Embed(title=game['title'], description=f"{game['price']['totalPrice']['originalPrice']['amount']} {game['price']['totalPrice']['originalPrice']['currency']}", color=0xff0000)
+                embed.add_field(name="\u200b", value="Free")
+                embed.set_thumbnail(url="https://www.epicgames.com/fortnite/static/favicon.png")
+                embed.set_footer(text="Epic Games")
+                await ctx.send(embed=embed)
 
-        # Combine the lists of free games from both services
-        free_games = epic_games_free_games + humble_bundle_free_games
-
-        # Send the list of free games in an embed
-        if free_games:
-            for game in free_games:
-                 embed = discord.Embed(title=game.name, color=0x00FF00)
-                 embed.add_field(name="URL", value=game.url)
-                 embed.set_thumbnail(url=game.poster_url)
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("No free games could be found.")
-
+def setup(bot):
+    bot.add_cog(FreeGames(bot))
