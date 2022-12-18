@@ -56,11 +56,9 @@ class FreeGames(commands.Cog):
 
         # Send the list of free games in an embed
         if free_games:
-            embed = discord.Embed(color=0x00FF00)
-            embed.add_field(name="Free Game!", value="", inline=False)
+            embed = discord.Embed(title="Free Game!", color=0x00FF00)
             for game in free_games:
-                embed.title = game.name
-                embed.url = game.url
+                embed.add_field(name=game.name, value=game.url, inline=False)
                 embed.set_image(url=game.poster_url)
             await ctx.send(embed=embed)
         else:
