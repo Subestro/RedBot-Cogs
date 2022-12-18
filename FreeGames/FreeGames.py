@@ -30,7 +30,6 @@ class FreeGames(commands.Cog):
                 raw_data = raw_data["data"]["Catalog"]["searchStore"]["elements"]  # Cleans the data
                 return raw_data
             except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
-                logger.error(f"Request to {self.SERVICE_NAME} by module '{self.MODULE_ID}' failed")
                 return False
 
         def process_request(raw_data):
@@ -44,7 +43,7 @@ class FreeGames(commands.Cog):
                     # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
                     try:
                         if i["promotions"]["promotionalOffers"]:
-                            original_price = i["price"]["totalPrice"].get("originalPrice", 1)
+                            original_price = i["price"]["totalPrice"].get("originalPrice", 0)
                             game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price)
                             processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
