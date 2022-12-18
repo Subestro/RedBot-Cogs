@@ -1,39 +1,59 @@
-import requests
-import discord
 from redbot.core import commands
+import discord
+import requests
 
 class FreeGames(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+  def __init__(self, bot):
+    self.bot = bot
 
-    @commands.command()
-    async def freegames(self, ctx):
-        # Get free games from Humble Bundle
-        humble_url = "https://www.humblebundle.com/store/api/search?sort=discount&filter=onsale&request=1"
-        r = requests.get(humble_url)
-        humble_data = r.json()
+  @commands.command()
+  async def checkfreegames(self, ctx):
+    # Make a request to the Epic Games API to get a list of free games
+    epic_games_response = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-US&country=US&allowCountries=US")
+    epic_games_data = epic_games_response.json()
 
-        # Get free games from Epic Games
-        epic_url = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES"
-        r = requests.get(epic_url)
-        epic_data = r.json()
+    # Make a request to the Humble Bundle API to get a list of games on sale
+    humble_bundle_response = requests.get("https://www.humblebundle.com/store/api/search?sort=discount&filter=onsale&request=1")
+    humble_bundle_data = humble_bundle_response.json()
 
-        # Send an embed for each free game
-        for game in humble_data['results']:
-            if game['discount_price']['amount'] == 0:
-                embed = discord.Embed(title=game['human_name'], description=f"{game['regular_price']['amount']} {game['regular_price']['currency']}", color=0xff0000)
-                embed.add_field(name="\u200b", value="Free")
-                embed.set_thumbnail(url="https://www.humblebundle.com/static/humble_bundle_logo_small.png")
-                embed.set_footer(text="Humble Bundle")
-                await ctx.send(embed=embed)
+    # You'll need to figure out how to get a list of free games from the Uplay API.
+    # Once you have that data, you can store it in a variable called "uplay_data"
 
-        for game in epic_data['data']['Catalog']['searchStore']['elements']:
-            if game['price']['totalPrice']['discountPrice']['amount'] == 0:
-                embed = discord.Embed(title=game['title'], description=f"{game['price']['totalPrice']['originalPrice']['amount']} {game['price']['totalPrice']['originalPrice']['currency']}", color=0xff0000)
-                embed.add_field(name="\u200b", value="Free")
-                embed.set_thumbnail(url="https://www.epicgames.com/fortnite/static/favicon.png")
-                embed.set_footer(text="Epic Games")
-                await ctx.send(embed=embed)
+    # Create an empty list to store the names of the free games
+    free_games = []
+
+    # Iterate through the list of games from the Epic Games API
+    for game in epic_games_data:
+      # Check if the game is free
+      if game['price']['totalPrice']['discountPrice'] == 0:
+        # If the game is free, add its name to the list of free games
+        free_games.append(game['title'])
+
+    # Iterate through the list of games from the Humble Bundle API
+    for game in humble_bundle_data:
+      # Check if the game is free
+      if game['salePrice']['amount'] == 0:
+        # If the game is free, add its name to the list of free games
+        free_games.append(game['title'])
+
+    # Iterate through the list of games from the Uplay API
+    for game in uplay_data:
+      # Check if the game is free
+      if game['price']['amount'] == 0:
+        # If the game is free, add its name to the list of free games
+        free_games.append(game['title'])
+
+    # If there are no free games, do nothing
+    if len(free_games) == 0:
+      await ctx.send("There are no free games currently available on Humble, Epic Games, or Uplay.")
+      return
+
+    # If there are free games, create an embed message
+    embed = discord.Embed(title="Free Games Alert!", description="There are currently free games available on Humble, Epic Games, and Uplay!", color=discord.Color.red())
+    embed.add_field(name="Free Games", value="\n".join(free_games), inline=False)
+
+    # Send the embed message to the channel where the command was used
+    await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(FreeGames(bot))
