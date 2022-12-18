@@ -62,7 +62,7 @@ class FreeGames(commands.Cog):
             for game in free_games:
                 embed = discord.Embed(title=game.name, color=0x00FF00)
                 field_value = f"~~${game.original_price}~~ **Free**"
-                embed.add_field(name=field_value, value="--", inline=True)
+                embed.add_field(name=field_value, value="--", inline=False)
                 embed.set_image(url=game.poster_url)
                 await ctx.send(embed=embed)
         else:
