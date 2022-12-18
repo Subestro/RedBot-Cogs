@@ -17,7 +17,7 @@ class FreeGames(commands.Cog):
         self.MODULE_ID = "epic"
         self.AUTHOR = "Default"
         self.URL = "https://www.epicgames.com/store/us-US/product/"
-        self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES"
+        self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US"
 
     @commands.command()
     async def get_free_games(self, ctx):
