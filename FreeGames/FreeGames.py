@@ -2,6 +2,7 @@ import discord
 import json
 import requests
 from requests.exceptions import HTTPError, Timeout
+from discord.ui import Button
 from redbot.core import commands, checks
 
 class Game:
@@ -31,6 +32,18 @@ class FreeGames(commands.Cog):
                 return raw_data
             except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
                 return False
+    @commands.command()
+    @checks.is_owner()
+    async def send_message(self, ctx):
+        # Create the message
+        message = "Hello, world!"
+
+        # Create the component button
+        button = Button("Click me!", url="https://example.com")
+
+        # Send the message with the component button
+        await ctx.send(message, button=button)
+
 
         def process_request(raw_data):
             """Returns a list of free games from the raw data."""
