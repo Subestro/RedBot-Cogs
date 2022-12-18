@@ -18,9 +18,7 @@ class FreeGames(commands.Cog):
         r = requests.get(epic_url)
         epic_data = r.json()
 
-        # Build the message
-        message = "Here are the current free games:\n\n"
-        message += "**Humble Bundle**\n"
+        # Send an embed for each free game
         for game in humble_data['results']:
             if game['discount_price']['amount'] == 0:
                 embed = discord.Embed(title=game['human_name'], description=f"{game['regular_price']['amount']} {game['regular_price']['currency']}", color=0xff0000)
@@ -29,7 +27,6 @@ class FreeGames(commands.Cog):
                 embed.set_footer(text="Humble Bundle")
                 await ctx.send(embed=embed)
 
-        message += "\n**Epic Games**\n"
         for game in epic_data['data']['Catalog']['searchStore']['elements']:
             if game['price']['totalPrice']['discountPrice']['amount'] == 0:
                 embed = discord.Embed(title=game['title'], description=f"{game['price']['totalPrice']['originalPrice']['amount']} {game['price']['totalPrice']['originalPrice']['currency']}", color=0xff0000)
