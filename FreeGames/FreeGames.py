@@ -10,6 +10,7 @@ class Game:
         self.url = url
         self.poster_url = poster_url
         self.original_price = original_price
+        self.total_price = total_price
         
 class FreeGames(commands.Cog):
     def __init__(self, bot):
@@ -45,7 +46,8 @@ class FreeGames(commands.Cog):
                     try:
                         if i["promotions"]["promotionalOffers"]:
                             original_price = i["price"]["totalPrice"].get("originalPrice", 0)
-                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price)
+                            total_price = i["price"]["totalPrice"]["discountPrice"]
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price, total_price)
                             processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
                         pass
@@ -63,6 +65,7 @@ class FreeGames(commands.Cog):
                 embed = discord.Embed(title=game.name, color=0x00FF00)
                 field_value = f"${game.original_price} **Free**"
                 embed.add_field(name=field_value, value="\u200b", inline=True)
+                embed.add_field(name=f"Total price: ${game.total_price}", value="\u200b", inline=False)
                 embed.set_image(url=game.poster_url)
                 await ctx.send(embed=embed)
         else:
