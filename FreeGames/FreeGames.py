@@ -20,7 +20,7 @@ class FreeGames(commands.Cog):
         self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES"
 
     @commands.command()
-    async def get_free_games(self, ctx):
+    async def gfg(self, ctx):
         def make_request():
             """Makes the request and removes the unnecessary JSON data."""
             try:
