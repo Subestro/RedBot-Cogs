@@ -9,8 +9,7 @@ class Game:
         self.name = name
         self.url = url
         self.poster_url = poster_url
-        self.poster_url = poster_url
-        self.original_price = original_price
+        
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -44,7 +43,7 @@ class FreeGames(commands.Cog):
                     # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
                     try:
                         if i["promotions"]["promotionalOffers"]:
-                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], i["price"]["totalPrice"]["originalPrice"])
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"])
                             processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
                         pass
@@ -58,8 +57,9 @@ class FreeGames(commands.Cog):
         # Send the list of free games in an embed
         if free_games:
             for game in free_games:
-                 embed = discord.Embed(title=game.name, color=0x00FF00)
-                 embed.add_field(name="Price", value=f"~~{game.original_price}~~ FREE")
+                 #embed = discord.Embed(title=game.name, color=0x00FF00)
+                 embed = discord.Embed(color=0x00FF00)
+                 embed.add_field(name="Game name", value=game.name, inline=False)
             await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
