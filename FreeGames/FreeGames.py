@@ -9,7 +9,7 @@ class FreeGames(commands.Cog):
     @commands.command()
     async def checkfreegames(self, ctx):
         # Use the API link to get the list of free games
-        r = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-US&country=US&allowCountries=US")
+        r = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES")
         data = r.json()
 
         # Check if there is a 'data' key in the JSON data
