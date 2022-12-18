@@ -17,7 +17,7 @@ class FreeGames(commands.Cog):
         self.MODULE_ID = "epic"
         self.AUTHOR = "Default"
         self.URL = "https://www.epicgames.com/store/us-US/product/"
-        self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US"
+        self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES"
 
     @commands.command()
     async def get_free_games(self, ctx):
@@ -51,17 +51,16 @@ class FreeGames(commands.Cog):
                 logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
 
             return processed_data
-
         # Get the list of free games
         free_games = process_request(make_request())
 
         # Send the list of free games in an embed
         if free_games:
+            embed = discord.Embed(title=game.name, color=0x00FF00)
             for game in free_games:
-                # Create an embed message for the game
-                embed = discord.Embed(color=0x00FF00)
-                embed.add_field(name="Game name", value=game.name, inline=False)
-                embed.set_footer(icon_url=game.poster_url)
-                await ctx.send(embed=embed)
+                embed.add_field(name="Free", value="", inline=False)
+                embed.set_image(url=game.poster_url)
+            await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
+            
