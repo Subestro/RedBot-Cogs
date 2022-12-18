@@ -61,6 +61,7 @@ class FreeGames(commands.Cog):
         if free_games:
             for game in free_games:
                 embed = discord.Embed(title=game.name, color=0x00FF00)
+                embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
                 field_value = f"~~${game.original_price}~~ **Free**"
                 embed.add_field(name=field_value, value="\u200b", inline=False)
                 embed.set_image(url=game.poster_url)
