@@ -1,42 +1,65 @@
 import discord
-from redbot.core import commands
+import json
 import requests
+from requests.exceptions import HTTPError, Timeout
+from redbot.core import commands, checks
 
+class Game:
+    def __init__(self, name, url, poster_url):
+        self.name = name
+        self.url = url
+        self.poster_url = poster_url
+        
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.SERVICE_NAME = "Epic Games"
+        self.MODULE_ID = "epic"
+        self.AUTHOR = "Default"
+        self.URL = "https://www.epicgames.com/store/us-US/product/"
+        self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=es-ES&country=ES&allowCountries=ES"
 
     @commands.command()
-    async def checkfreegames(self, ctx):
-        # Use the API link to get the list of free games
-        r = requests.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US")
-        data = r.json()
+    async def get_free_games(self, ctx):
+        def make_request():
+            """Makes the request and removes the unnecessary JSON data."""
+            try:
+                raw_data = requests.get(self.ENDPOINT)
+                raw_data = json.loads(raw_data.content)  # Bytes to json object
+                raw_data = raw_data["data"]["Catalog"]["searchStore"]["elements"]  # Cleans the data
+                return raw_data
+            except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
+                logger.error(f"Request to {self.SERVICE_NAME} by module '{self.MODULE_ID}' failed")
+                return False
 
-        # Check if there is a 'data' key in the JSON data
-        if 'data' in data:
-            # Check if there is a 'promotions' key in the data['data'] dictionary
-            if 'promotions' in data['data']:
-                # Check if there are any free games available
-                if data['data']['promotions']:
-                    # Create the embed message
-                    embed = discord.Embed(title="Free Games on Epic Games Store", color=0xff0000)
+        def process_request(raw_data):
+            """Returns a list of free games from the raw data."""
+            processed_data = []
 
-                    # Add the list of free games to the embed message
-                    for game in data['data']['promotions']:
-                        embed.add_field(name=game['title'], value=game['description'], inline=False)
-                        # Set the game's name as the title of the embed message
-                        embed.title = game['title']
-                        # Set the game's poster as the footer of the embed message
-                        embed.set_footer(text=game['keyImages'][0]['url'])
+            if not raw_data:
+                return False
+            try:
+                for i in raw_data:
+                    # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
+                    try:
+                        if i["promotions"]["promotionalOffers"]:
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"])
+                            processed_data.append(game)
+                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
+                        pass
+            except KeyError:
+                logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
 
-                    # Send the embed message to the channel
-                    await ctx.send(embed=embed)
-                else:
-                    await ctx.send("There are no free games available on the Epic Games Store at the moment.")
-            else:
-                await ctx.send("The 'promotions' key was not found in the data.")
+            return processed_data
+        # Get the list of free games
+        free_games = process_request(make_request())
+
+        # Send the list of free games in an embed
+        if free_games:
+            for game in free_games:
+                 #embed = discord.Embed(title=game.name, color=0x00FF00)
+                 embed = discord.Embed(color=0x00FF00)
+                 embed.add_field(name="Game name", value=game.name, inline=False)
+            await ctx.send(embed=embed)
         else:
-            await ctx.send("The 'data' key was not found in the JSON data.")
-
-def setup(bot):
-    bot.add_cog(FreeGames(bot))
+            await ctx.send("No free games could be found.")
