@@ -45,6 +45,7 @@ class FreeGames(commands.Cog):
                     try:
                         if i["promotions"]["promotionalOffers"]:
                             original_price = i["price"]["totalPrice"].get("originalPrice", 0)
+                            trailer_url = i["videos"][0]["videoUrl"]  # Retrieve the trailer URL
                             game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price)
                             processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
@@ -65,6 +66,8 @@ class FreeGames(commands.Cog):
                 embed.description = f"~~${game.original_price}~~ |**Free**"
                 embed.add_field(name="Get Now", value=game.url, inline=True)
                 embed.set_image(url=game.poster_url)
+                # Add the trailer for the game
+                embed.add_field(name="Trailer", value=game.trailer_url, inline=False)
                 await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
