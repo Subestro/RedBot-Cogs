@@ -68,10 +68,7 @@ class FreeGames(commands.Cog):
                 message = await ctx.send(embed=embed)
 
                 # Create the button
-                button = Button(
-                    text="Get",  # The text that will be displayed on the button
-                    callback="open_game_url"  # The name of the callback function that will be called when the button is clicked
-                )
+                button = Button(name="Get", callback="open_game_url")
 
                 # Create a DiscordComponents object and add the button to it
                 components = DiscordComponents(self.bot, ctx.channel, ctx.author)
