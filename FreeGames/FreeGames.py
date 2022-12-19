@@ -69,7 +69,7 @@ class FreeGames(commands.Cog):
 
                 # Create the button
                 button = Button(
-                    name="Get",  # The text that will be displayed on the button
+                    text="Get",  # The text that will be displayed on the button
                     callback="open_game_url"  # The name of the callback function that will be called when the button is clicked
                 )
 
@@ -79,5 +79,10 @@ class FreeGames(commands.Cog):
                 await components.send()
         
         else:
-            await ctx.send("No free games could be found.")
+            await ctx.send("No free games could be retrieved.")
+
+    def open_game_url(self, user, message, channel):
+        """Opens the game's URL in the user's web browser."""
+        # Code to open the game's URL in the user's web browser goes here
+        pass
 
