@@ -5,6 +5,10 @@ from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
 from discord_components_mirror import DiscordComponents, ComponentsBot, Button
 
+# Define the Button class
+class Button:
+    def __init__(self, name):
+        self.name = name
 class Game:
     def __init__(self, name, url, poster_url, original_price):
         self.name = name
