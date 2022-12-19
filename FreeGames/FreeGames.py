@@ -65,10 +65,17 @@ class FreeGames(commands.Cog):
                 embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
                 embed.description = f"~~${game.original_price}~~ | **Free**"
                 embed.set_image(url=game.poster_url)
-                await ctx.send(embed=embed)
-                # Add a button to the embed
-                button = Button("Get the game", game.url)
-                embed.add_field(name="Button", value=button)
+                message = await ctx.send(embed=embed)
+
+                # Create and add a button to the embed
+                button = Button(
+                    "Get",
+                    style={
+                        "color": "green"
+                    },
+                    action=f"https://www.epicgames.com/store/us-US/product/{game.name}"
+                )
+                await button.add_to(message)
         else:
-            await ctx.send("No free games could be found.")
+            await ctx.send("No free games could be found")
 
