@@ -68,7 +68,8 @@ class FreeGames(commands.Cog):
                 message = await ctx.send(embed=embed)
 
                 # Create and add a button to the embed
-                button = Button(text="Get",style={"color": "green"},action=f"https://www.epicgames.com/store/us-US/product/{game.name}")
+                #button = Button("Get",style={"color": "green"},action=f"https://www.epicgames.com/store/us-US/product/{game.name}")
+                Button = Button("press me", "green")
                 await button.add_to(message)
         else:
             await ctx.send("No free games could be found.")
