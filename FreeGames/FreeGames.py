@@ -3,7 +3,7 @@ import json
 import requests
 from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
-from discord_components import DiscordComponents, ComponentsBot, Button
+from discord_components_mirror import DiscordComponents, ComponentsBot, Button
 
 class Game:
     def __init__(self, name, url, poster_url, original_price):
