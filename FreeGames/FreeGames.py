@@ -63,7 +63,7 @@ class FreeGames(commands.Cog):
                 embed = discord.Embed(title=game.name, color=0x00FFFF)
                 embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
                 embed.description = f"~~${game.original_price}~~ |**Free**"
-                embed.set_image(url=game.url)
+                embed.set_image(url="https://www.epicgames.com/store/us-US/product/{game.name}")
                 embed.set_image(url=game.poster_url)
                 await ctx.send(embed=embed)
         else:
