@@ -69,7 +69,7 @@ class FreeGames(commands.Cog):
 
                 # Create the button
                 button = Button(
-                    text="Get",  # The text that will be displayed on the button
+                    name="Get",  # The text that will be displayed on the button
                     callback="open_game_url"  # The name of the callback function that will be called when the button is clicked
                 )
 
