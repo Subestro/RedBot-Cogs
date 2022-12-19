@@ -68,7 +68,7 @@ class FreeGames(commands.Cog):
                 message = await ctx.send(embed=embed)
 
                 # Create the button
-                button = Button(label="Get")
+                button = Button(name="Get")
 
                 # Create a DiscordComponents object and add the button to it
                 components = DiscordComponents(self.bot, ctx.channel, ctx.author)
