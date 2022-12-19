@@ -66,7 +66,7 @@ class FreeGames(commands.Cog):
                 embed.description = f"~~${game.original_price}~~ | **Free**"
                 embed.set_image(url=game.poster_url)
                 button = Button(text="Get", url=game.url)
-                embed.add_field(name="GET", value=button, inline=True)
+                embed.add_field(name="", value=button, inline=True)
                 await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
