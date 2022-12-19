@@ -11,6 +11,10 @@ class Game:
         self.url = url
         self.poster_url = poster_url
         self.original_price = original_price
+class Button:
+    def __init__(self, name):
+        self.name = name
+
         
 class FreeGames(commands.Cog):
     def __init__(self, bot):
