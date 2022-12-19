@@ -3,6 +3,7 @@ import json
 import requests
 from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
+from discord.ui import Button
 
 class Game:
     def __init__(self, name, url, poster_url, original_price):
@@ -64,7 +65,8 @@ class FreeGames(commands.Cog):
                 embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
                 embed.description = f"~~${game.original_price}~~ | **Free**"
                 embed.set_image(url=game.poster_url)
-                embed.add_field(name="Get", value=game.url, inline=True)  # Add a button with the text "Get"
+                button = Button(text="Get", url=game.url)
+                embed.add_field(name="", value=button, inline=True)
                 await ctx.send(embed=embed)
         else:
             await ctx.send("No free games could be found.")
