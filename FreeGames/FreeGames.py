@@ -75,7 +75,7 @@ class FreeGames(commands.Cog):
                 button = Button(name="Get")
 
                 # Create a DiscordComponents object and add the button to it
-                components = DiscordComponents(self.bot, ctx.channel)
+                components = DiscordComponents(self, ctx.channel)
                 await components.add_reaction(button, message, ctx.author)
                 await components.send()
         
