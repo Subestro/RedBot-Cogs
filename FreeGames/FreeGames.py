@@ -80,6 +80,5 @@ class FreeGames(commands.Cog):
 
     def open_game_url(self, user, message, channel):
         """Opens the game's URL in the user's web browser."""
-        # Code to open the game's URL in the user's web browser goes here
-        pass
+        # Code to open the URL in the user's web browser goes here
 
