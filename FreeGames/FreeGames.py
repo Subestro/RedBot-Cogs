@@ -71,7 +71,7 @@ class FreeGames(commands.Cog):
                 button = Button(
                     "Get",
                     color="green",
-                    action=f"https://www.epicgames.com/store/us-US/product/{game.name}"
+                    url=f"https://www.epicgames.com/store/us-US/product/{game.name}"
                 )
                 await button.add_to(message)
         else:
