@@ -70,9 +70,7 @@ class FreeGames(commands.Cog):
                 # Create and add a button to the embed
                 button = Button(
                     "Get",
-                    style={
-                        "color": "green"
-                    },
+                    color="green",
                     action=f"https://www.epicgames.com/store/us-US/product/{game.name}"
                 )
                 await button.add_to(message)
