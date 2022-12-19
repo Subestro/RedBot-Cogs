@@ -77,5 +77,5 @@ class FreeGames(commands.Cog):
                 )
                 await button.add_to(message)
         else:
-            await ctx.send("No free games could be found")
+            await ctx.send("No free games could be found.")
 
