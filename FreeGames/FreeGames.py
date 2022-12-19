@@ -3,19 +3,14 @@ import json
 import requests
 from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
-from discord_components_mirror import DiscordComponents, ComponentsBot, Button
 
-# Define the Button class
-class Button:
-    def __init__(self, name):
-        self.name = name
 class Game:
     def __init__(self, name, url, poster_url, original_price):
         self.name = name
         self.url = url
         self.poster_url = poster_url
         self.original_price = original_price
-     
+        
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -69,20 +64,7 @@ class FreeGames(commands.Cog):
                 embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
                 embed.description = f"~~${game.original_price}~~ | **Free**"
                 embed.set_image(url=game.poster_url)
-                message = await ctx.send(embed=embed)
-
-                # Create the button
-                button = Button(name="Get")
-
-                # Create a DiscordComponents object and add the button to it
-                components = DiscordComponents(self, ctx.channel)
-                await components.add_reaction(button, message, ctx.author)
-                await components.send()
-        
+                await ctx.send(embed=embed)
         else:
-            await ctx.send("No free games could be retrieved.")
-
-    def open_game_url(self, user, message, channel):
-        """Opens the game's URL in the user's web browser."""
-        # Code to open the URL in the user's web browser goes here
+            await ctx.send("No free games could be found.")
 
