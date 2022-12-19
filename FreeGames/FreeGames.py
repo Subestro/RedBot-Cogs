@@ -3,7 +3,6 @@ import json
 import requests
 from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands, checks
-from discord_components import DiscordComponents, ComponentsBot, Button
 
 class Game:
     def __init__(self, name, url, poster_url, original_price):
@@ -66,7 +65,6 @@ class FreeGames(commands.Cog):
                 embed.description = f"~~${game.original_price}~~ | **Free**"
                 embed.set_image(url=game.poster_url)
                 await ctx.send(embed=embed)
-        
         else:
             await ctx.send("No free games could be found.")
 
