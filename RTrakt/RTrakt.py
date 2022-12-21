@@ -56,7 +56,7 @@ class rTrakt(commands.Cog):
         config['trakt']['redirect_url'] = redirect_url
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
-            
+
     @commands.command(help="Set the OMDb API key")
     async def Rsetomdb(self, ctx, api_key: str):
         self.omdb_api_key = api_key
@@ -70,7 +70,7 @@ class rTrakt(commands.Cog):
             config.write(configfile)
 
         # Get the current user's Trakt account information
-        user = trakt.users.me()
+        user = trakt.users.me(
 
         # Get the currently playing media on the user's Trakt account
         playing = user.watching()
