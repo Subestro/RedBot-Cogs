@@ -1,73 +1,50 @@
+import os
+import requests
+
 import discord
-import aiohttp
-import asyncio
-from redbot.core import commands
-from redbot.core.data_manager import basic_config
+from discord.ext import commands
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.session = aiohttp.ClientSession()
-        self.config = basic_config.BasicConfig("rTrakt", {"access_token": "", "refresh_token": "", "api_key": ""})
-        self.update_presence_task = asyncio.create_task(self.update_presence())
-    
+
     @commands.command()
-    async def rTraktAuth(self, ctx, code: str):
-        async with self.session.post("https://api.trakt.tv/oauth/token", json={
-            "client_id": "your_client_id",  # replace with your Trakt API client ID
-            "client_secret": "your_client_secret",  # replace with your Trakt API client secret
-            "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
-            "grant_type": "authorization_code",
-            "code": code
-        }) as resp:
-            data = await resp.json()
-            access_token = data["access_token"]
-            refresh_token = data["refresh_token"]
-        
-        self.config["access_token"] = access_token
-        self.config["refresh_token"] = refresh_token
-        await ctx.send("Authorization successful!")
-    
-    @commands.command()
-    async def rOMDB(self, ctx, api_key: str):
-        self.config["api_key"] = api_key
-        await ctx.send("OMDB API key set successfully!")
-    
-    async def update_presence(self):
-        try:
-            access_token = self.config["access_token"]
-            api_key = self.config["api_key"]
-        except KeyError:
-            return
-        
-        while True:
-            # Make a GET request to the Trakt API to get the currently playing item
-            async with self.session.get("https://api.trakt.tv/users/me/watching", headers={
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json"
-            }) as resp:
-                data = await resp.json()
-                item = data["item"]
-                title = item["title"]
-                year = item["year"]
-            
-            # Make a GET request to the OMDB API to get the poster image
-            async with self.session.get(f"http://www.omdbapi.com/?apikey={api_key}&t={title}&y={year}") as resp:
-                data = await resp.json()
-                poster_url = data["Poster"]
-            
-            # Create the rich presence object with the poster image
-            activity = discord.Activity(
-                name=f"Watching {title} ({year})",
-                type=discord.ActivityType.watching,
-                details="Trakt Scrobbler",
-                large_image="poster",
-                large_image_url=poster_url
-            )
+    async def scrobbler(self, ctx):
+        # Request authorization code
+        auth_response = requests.post(
+            "https://api.trakt.tv/oauth/device/code",
+            headers={"Content-Type": "application/json", "trakt-api-key": os.environ["TRAKT_CLIENT_ID"], "trakt-api-version": 2},
+            json={"client_id": os.environ["TRAKT_CLIENT_ID"]}
+        )
 
-            # Set the bot's rich presence
-            await self.bot.change_presence(activity=activity)
+        # Extract authorization code from response
+        auth_code = auth_response.json()["user_code"]
 
-            # Sleep for 5 minutes before updating the presence again
-            await asyncio.sleep(300)
+        # Display authorization code in embed
+        embed = discord.Embed(title="Trakt Scrobbler", description=f"Enter the following code to authorize the bot: `{auth_code}`")
+        await ctx.send(embed=embed)
 
+        # Wait for user to enter code and authorize bot
+        auth_response = requests.post(
+            "https://api.trakt.tv/oauth/device/token",
+            headers={"Content-Type": "application/json", "trakt-api-key": os.environ["TRAKT_CLIENT_ID"], "trakt-api-version": 2},
+            json={"client_id": os.environ["TRAKT_CLIENT_ID"], "client_secret": os.environ["TRAKT_CLIENT_SECRET"], "code": auth_code}
+        )
+
+        # Extract access token from response
+        access_token = auth_response.json()["access_token"]
+
+        # Use access token to retrieve scrobbler status
+        scrobbler_response = requests.get(
+            "https://api.trakt.tv/sync/playback/scrobble",
+            headers={"Content-Type": "application/json", "trakt-api-key": os.environ["TRAKT_CLIENT_ID"], "trakt-api-version": 2, "Authorization": f"Bearer {access_token}"}
+        )
+
+        # Extract scrobbler status from response
+        scrobbler_status = scrobbler_response.json()["status"]
+
+        # Set bot's rich presence
+        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=scrobbler_status))
+
+def setup(bot):
+    bot.add_cog(rTrakt(bot))
