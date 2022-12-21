@@ -1,8 +1,8 @@
 import discord
 import pytrakt
 import requests
+import trakt
 import urllib.parse
-
 from redbot.core import commands
 
 class rTrakt(commands.Cog):
