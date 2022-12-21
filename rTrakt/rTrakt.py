@@ -1,5 +1,5 @@
 import discord
-import trakt
+import trakt==1.0.9
 from redbot.core import commands
 import asyncio
 
