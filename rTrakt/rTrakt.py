@@ -1,29 +1,17 @@
 import discord
-import trakt==1.0.9
 from redbot.core import commands
+import trakt
 import asyncio
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.client_id = 'YOUR_CLIENT_ID'
-        self.client_secret = 'YOUR_CLIENT_SECRET'
-        self.trakt_client = trakt.TraktClient(client_id=self.client_id, client_secret=self.client_secret)
-
-    @commands.command()
-    async def set_client_id(self, ctx, client_id: str):
-        self.client_id = client_id
-        await ctx.send(f'Successfully set client ID to {client_id}')
-
-    @commands.command()
-    async def set_client_secret(self, ctx, client_secret: str):
-        self.client_secret = client_secret
-        await ctx.send(f'Successfully set client secret to {client_secret}')
+        self.trakt_api = trakt.TraktAPI(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET')
 
     @commands.command()
     async def set_watching(self, ctx):
         # Redirect the user to the Trakt authorization URL
-        auth_url = self.trakt_client.auth.authorization_url('urn:ietf:wg:oauth:2.0:oob')
+        auth_url = self.trakt_api.auth.authorization_url('urn:ietf:wg:oauth:2.0:oob')
         await ctx.send(f'Please visit the following URL to authorize the bot to access your Trakt account: {auth_url}')
 
         # Wait for the user to enter the authorization code
@@ -36,11 +24,11 @@ class rTrakt(commands.Cog):
 
         # Exchange the authorization code for an access token
         code = msg.content
-        access_token = self.trakt_client.auth.exchange_code_for_token(code)
-        self.trakt_client.set_access_token(access_token)
+        access_token = self.trakt_api.auth.exchange_code_for_token(code)
+        self.trakt_api.set_access_token(access_token)
 
         # Set the bot's rich presence to show what the user is currently watching
-        currently_watching = self.trakt_client.sync.get_playback()
+        currently_watching = self.trakt_api.sync.get_playback()
         activity = discord.Game(name=currently_watching.current.title)
         await self.bot.change_presence(activity=activity)
         await ctx.send('Successfully set rich presence to show what you are currently watching.')
