@@ -1,11 +1,11 @@
 import discord
 from redbot.core import commands
-import trakt.core
+import trakt
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.trakt_client = trakt.core.Client(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET')
+        self.trakt_client = trakt.Client(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET')
 
     @commands.command()
     async def set_watching(self, ctx):
@@ -27,8 +27,8 @@ class rTrakt(commands.Cog):
         self.trakt_client.set_access_token(access_token)
 
         # Set the bot's rich presence to show what the user is currently watching
-        currently_watching = self.trakt_client.users.watching()
-        activity = discord.Game(name=currently_watching.item.title)
+        currently_watching = self.trakt_client.sync.get_playback()
+        activity = discord.Game(name=currently_watching.current.title)
         await self.bot.change_presence(activity=activity)
         await ctx.send('Successfully set rich presence to show what you are currently watching.')
 
