@@ -9,7 +9,7 @@ class RTrakt(commands.Cog):
         self.bot = bot
         self.trakt_client_id = None
         self.trakt_client_secret = None
-        self.imdb_api_key = None
+        self.omdb_api_key = None
         self.trakt_redirect_url = None
 
         # Read the configuration values from a file
@@ -19,8 +19,8 @@ class RTrakt(commands.Cog):
             self.trakt_client_id = config['trakt'].get('client_id', None)
             self.trakt_client_secret = config['trakt'].get('client_secret', None)
             self.trakt_redirect_url = config['trakt'].get('redirect_url', None)
-        if 'imdb' in config:
-            self.imdb_api_key = config['imdb'].get('api_key', None)
+        if 'omdb' in config:
+            self.omdb_api_key = config['omdb'].get('api_key', None)
 
     @commands.command(help="Set the Trakt API client ID")
     async def Rsettrakt(self, ctx, client_id: str):
@@ -58,15 +58,15 @@ class RTrakt(commands.Cog):
             config.write(configfile)
 
 
-    @commands.command(help="Set the IMDb API key")
-    async def Rsetimdb(self, ctx, api_key: str):
-        self.imdb_api_key = api_key
+    @commands.command(help="Set the OMDb API key")
+    async def Rsetomdb(self, ctx, api_key: str):
+        self.omdb_api_key = api_key
         # Save the API key to the configuration file
         config = configparser.ConfigParser()
         config.read('rTrakt_config.ini')
-        if 'imdb' not in config:
-            config['imdb'] = {}
-        config['imdb']['api_key'] = api_key
+        if 'omdb' not in config:
+            config['omdb'] = {}
+        config['omdb']['api_key'] = api_key
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
 
@@ -76,18 +76,14 @@ class RTrakt(commands.Cog):
         # Get the currently playing media on the user's Trakt account
         playing = user.watching()
 
-        # Search for the show or movie on IMDb
+        # Search for the show or movie on OMDb
         query = playing.title
-        endpoint = f"http://imdb-api.com/en/API/Search/k_{self.imdb_api_key}/s_{query}"
+        endpoint = f"http://www.omdbapi.com/?apikey={self.omdb_api_key}&s={query}"
         response = requests.get(endpoint)
         data = response.json()
 
-        # Get the poster image URL from the IMDb response
-        poster_url = data["items"][0]["poster"]
+        # Get the poster image URL from the OMDb response
+        poster_url = data["Search"][0]["Poster"]
 
-        # Set the rich presence information
-        game = discord.Game(name=playing.title, assets={
-            "poster": poster_url
-        })
-        await self.bot.change_presence(activity=game)
-
+        # Send the poster image URL as a message in Discord
+        await ctx.send(poster_url)
