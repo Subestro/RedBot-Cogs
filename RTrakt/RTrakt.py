@@ -4,7 +4,7 @@ from redbot.core import commands
 import trakt
 import configparser
 
-class RTrakt(commands.Cog):
+class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.trakt_client_id = None
