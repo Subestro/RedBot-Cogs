@@ -57,18 +57,17 @@ class rTrakt(commands.Cog):
                 poster_url = data["Poster"]
             
             # Create the rich presence object with the poster image
-            presence = discord.RichPresence(
-                state=f"Watching {title} ({year})",
-            # Create the rich presence object with the poster image
-            presence = discord.RichPresence(
-                state=f"Watching {title} ({year})",
+            activity = discord.Activity(
+                name=f"Watching {title} ({year})",
+                type=discord.ActivityType.watching,
                 details="Trakt Scrobbler",
                 large_image="poster",
                 large_image_url=poster_url
             )
 
             # Set the bot's rich presence
-            await self.bot.change_presence(activity=presence)
+            await self.bot.change_presence(activity=activity)
 
             # Sleep for 5 minutes before updating the presence again
             await asyncio.sleep(300)
+
