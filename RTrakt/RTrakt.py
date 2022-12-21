@@ -22,6 +22,9 @@ class RTrakt(commands.Cog):
         if 'omdb' in config:
             self.omdb_api_key = config['omdb'].get('api_key', None)
 
+        # Initialize the Trakt API client
+        trakt.init(client_id=self.trakt_client_id, client_secret=self.trakt_client_secret)
+
     @commands.command(help="Set the Trakt API client ID")
     async def Rsettrakt(self, ctx, client_id: str):
         self.trakt_client_id = client_id
@@ -45,6 +48,7 @@ class RTrakt(commands.Cog):
         config['trakt']['client_secret'] = client_secret
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
+
     @commands.command(help="Set the Trakt API redirect URL")
     async def Rsetredirect(self, ctx, redirect_url: str):
         self.trakt_redirect_url = redirect_url
@@ -56,7 +60,6 @@ class RTrakt(commands.Cog):
         config['trakt']['redirect_url'] = redirect_url
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
-
 
     @commands.command(help="Set the OMDb API key")
     async def Rsetomdb(self, ctx, api_key: str):
@@ -70,6 +73,8 @@ class RTrakt(commands.Cog):
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
 
+    @commands.command(help="Get the currently playing media on the user's Trakt account")
+    async def Rplaying(self, ctx):
         # Get the current user's Trakt account information
         user = trakt.users.me()
 
@@ -85,5 +90,7 @@ class RTrakt(commands.Cog):
         # Get the poster image URL from the OMDb response
         poster_url = data["Search"][0]["Poster"]
 
-        # Send the poster image URL as a message in Discord
+        # Send a message to the Discord channel with the poster image and information about the currently playing media
+        await ctx.send(f"Currently playing: {playing.title} ({playing.year})")
         await ctx.send(poster_url)
+
