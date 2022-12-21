@@ -6,7 +6,19 @@ import asyncio
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.trakt_client = trakt.TraktClient(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET')
+        self.client_id = 'YOUR_CLIENT_ID'
+        self.client_secret = 'YOUR_CLIENT_SECRET'
+        self.trakt_client = trakt.TraktClient(client_id=self.client_id, client_secret=self.client_secret)
+
+    @commands.command()
+    async def set_client_id(self, ctx, client_id: str):
+        self.client_id = client_id
+        await ctx.send(f'Successfully set client ID to {client_id}')
+
+    @commands.command()
+    async def set_client_secret(self, ctx, client_secret: str):
+        self.client_secret = client_secret
+        await ctx.send(f'Successfully set client secret to {client_secret}')
 
     @commands.command()
     async def set_watching(self, ctx):
@@ -27,16 +39,11 @@ class rTrakt(commands.Cog):
         access_token = self.trakt_client.auth.exchange_code_for_token(code)
         self.trakt_client.set_access_token(access_token)
 
-        # Set up a callback function for the on_playback_start event
-        async def on_playback_start(data):
-            currently_watching = data['current']
-            activity = discord.Game(name=f"{currently_watching.title} - {currently_watching.progress:.0f}%")
-            await self.bot.change_presence(activity=activity)
-
-        # Register the callback function for the on_playback_start event
-        self.trakt_client.on('playback_start', on_playback_start)
-
-        await ctx.send('Successfully set up a live scrobbler in the bot\'s rich presence.')
+        # Set the bot's rich presence to show what the user is currently watching
+        currently_watching = self.trakt_client.sync.get_playback()
+        activity = discord.Game(name=currently_watching.current.title)
+        await self.bot.change_presence(activity=activity)
+        await ctx.send('Successfully set rich presence to show what you are currently watching.')
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
