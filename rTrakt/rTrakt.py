@@ -2,6 +2,7 @@ import os
 import requests
 
 import discord
+from redbot.core import commands
 from discord.ext import commands
 
 class rTrakt(commands.Cog):
