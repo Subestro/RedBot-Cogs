@@ -46,5 +46,6 @@ class rTrakt(commands.Cog):
         # Set bot's rich presence
         await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=scrobbler_status))
 
-def setup(bot):
-    bot.add_cog(rTrakt(bot))
+class rTrakt(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
