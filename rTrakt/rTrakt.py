@@ -1,51 +1,88 @@
-import os
-import requests
-
 import discord
+import requests
 from redbot.core import commands
-from discord.ext import commands
+import trakt
+import configparser
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.trakt_client_id = None
+        self.trakt_client_secret = None
+        self.omdb_api_key = None
+        self.trakt_redirect_url = None
 
-    @commands.command()
-    async def scrobbler(self, ctx):
-        # Request authorization code
-        auth_response = requests.post(
-            "https://api.trakt.tv/oauth/device/code",
-            headers={"Content-Type": "application/json", "trakt-api-key": os.environ["TRAKT_CLIENT_ID"], "trakt-api-version": 2},
-            json={"client_id": os.environ["TRAKT_CLIENT_ID"]}
-        )
+        # Read the configuration values from a file
+        config = configparser.ConfigParser()
+        config.read('rTrakt_config.ini')
+        if 'trakt' in config:
+            self.trakt_client_id = config['trakt'].get('client_id', None)
+            self.trakt_client_secret = config['trakt'].get('client_secret', None)
+            self.trakt_redirect_url = config['trakt'].get('redirect_url', None)
+        if 'omdb' in config:
+            self.omdb_api_key = config['omdb'].get('api_key', None)
 
-        # Extract authorization code from response
-        auth_code = auth_response.json()["user_code"]
+    @commands.command(help="Set the Trakt API client ID")
+    async def Rsettrakt(self, ctx, client_id: str):
+        self.trakt_client_id = client_id
+        # Save the client ID to the configuration file
+        config = configparser.ConfigParser()
+        config.read('rTrakt_config.ini')
+        if 'trakt' not in config:
+            config['trakt'] = {}
+        config['trakt']['client_id'] = client_id
+        with open('rTrakt_config.ini', 'w') as configfile:
+            config.write(configfile)
 
-        # Display authorization code in embed
-        embed = discord.Embed(title="Trakt Scrobbler", description=f"Enter the following code to authorize the bot: `{auth_code}`")
-        await ctx.send(embed=embed)
+    @commands.command(help="Set the Trakt API client secret")
+    async def Rsetsecret(self, ctx, client_secret: str):
+        self.trakt_client_secret = client_secret
+        # Save the client secret to the configuration file
+        config = configparser.ConfigParser()
+        config.read('rTrakt_config.ini')
+        if 'trakt' not in config:
+            config['trakt'] = {}
+        config['trakt']['client_secret'] = client_secret
+        with open('rTrakt_config.ini', 'w') as configfile:
+            config.write(configfile)
+    @commands.command(help="Set the Trakt API redirect URL")
+    async def Rsetredirect(self, ctx, redirect_url: str):
+        self.trakt_redirect_url = redirect_url
+        # Save the redirect URL to the configuration file
+        config = configparser.ConfigParser()
+        config.read('rTrakt_config.ini')
+        if 'trakt' not in config:
+            config['trakt'] = {}
+        config['trakt']['redirect_url'] = redirect_url
+        with open('rTrakt_config.ini', 'w') as configfile:
+            config.write(configfile)
 
-        # Wait for user to enter code and authorize bot
-        auth_response = requests.post(
-            "https://api.trakt.tv/oauth/device/token",
-            headers={"Content-Type": "application/json", "trakt-api-key": os.environ["TRAKT_CLIENT_ID"], "trakt-api-version": 2},
-            json={"client_id": os.environ["TRAKT_CLIENT_ID"], "client_secret": os.environ["TRAKT_CLIENT_SECRET"], "code": auth_code}
-        )
+    @commands.command(help="Set the OMDb API key")
+    async def Rsetomdb(self, ctx, api_key: str):
+        self.omdb_api_key = api_key
+        # Save the API key to the configuration file
+        config = configparser.ConfigParser()
+        config.read('rTrakt_config.ini')
+        if 'omdb' not in config:
+            config['omdb'] = {}
+        config['omdb']['api_key'] = api_key
+        with open('rTrakt_config.ini', 'w') as configfile:
+            config.write(configfile)
 
-        # Extract access token from response
-        access_token = auth_response.json()["access_token"]
+        # Get the current user's Trakt account information
+        user = trakt.users.me()
 
-        # Use access token to retrieve scrobbler status
-        scrobbler_response = requests.get(
-            "https://api.trakt.tv/sync/playback/scrobble",
-            headers={"Content-Type": "application/json", "trakt-api-key": os.environ["TRAKT_CLIENT_ID"], "trakt-api-version": 2, "Authorization": f"Bearer {access_token}"}
-        )
+        # Get the currently playing media on the user's Trakt account
+        playing = user.watching()
 
-        # Extract scrobbler status from response
-        scrobbler_status = scrobbler_response.json()["status"]
+        # Search for the show or movie on OMDb
+        query = playing.title
+        endpoint = f"http://www.omdbapi.com/?apikey={self.omdb_api_key}&s={query}"
+        response = requests.get(endpoint)
+        data = response.json()
 
-        # Set bot's rich presence
-        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=scrobbler_status))
+        # Get the poster image URL from the OMDb response
+        poster_url = data["Search"][0]["Poster"]
 
-def setup(bot):
-    bot.add_cog(rTrakt(bot))
+        # Send the poster image URL as a message in Discord
+        await ctx.send(poster_url)
