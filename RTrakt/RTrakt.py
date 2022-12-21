@@ -10,7 +10,7 @@ class RTrakt(commands.Cog):
         self.trakt_client_id = None
         self.trakt_client_secret = None
         self.omdb_api_key = None
-        self.trakt_redirect_url = None
+        self.trakt_redirect_uri = None
 
         # Read the configuration values from a file
         config = configparser.ConfigParser()
@@ -18,11 +18,11 @@ class RTrakt(commands.Cog):
         if 'trakt' in config:
             self.trakt_client_id = config['trakt'].get('client_id', None)
             self.trakt_client_secret = config['trakt'].get('client_secret', None)
-            self.trakt_redirect_url = config['trakt'].get('redirect_url', None)
+            self.trakt_redirect_uri = config['trakt'].get('redirect_uri', None)
         if 'omdb' in config:
             self.omdb_api_key = config['omdb'].get('api_key', None)
 
-        # Initialize the Trakt API client
+        # Initialize the Trakt API with the client ID and client secret
         trakt.init(client_id=self.trakt_client_id, client_secret=self.trakt_client_secret)
 
     @commands.command(help="Set the Trakt API client ID")
@@ -49,15 +49,15 @@ class RTrakt(commands.Cog):
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
 
-    @commands.command(help="Set the Trakt API redirect URL")
-    async def Rsetredirect(self, ctx, redirect_url: str):
-        self.trakt_redirect_url = redirect_url
-        # Save the redirect URL to the configuration file
+    @commands.command(help="Set the Trakt API redirect URI")
+    async def Rsetredirect(self, ctx, redirect_uri: str):
+        self.trakt_redirect_uri = redirect_uri
+        # Save the redirect URI to the configuration file
         config = configparser.ConfigParser()
         config.read('rTrakt_config.ini')
-        if 'trakt' not in config:
+        if 'trakt' not in config:           
             config['trakt'] = {}
-        config['trakt']['redirect_url'] = redirect_url
+        config['trakt']['redirect_uri'] = redirect_uri
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
 
@@ -91,6 +91,5 @@ class RTrakt(commands.Cog):
         poster_url = data["Search"][0]["Poster"]
 
         # Send a message to the Discord channel with the poster image and information about the currently playing media
-        await ctx.send(f"Currently playing: {playing.title} ({playing.year})")
-        await ctx.send(poster_url)
-
+        message = f"Currently watching: {playing.title} ({playing.year})\nRating: {playing.rating}\n{poster_url}"
+        await ctx.send(message)
