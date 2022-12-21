@@ -71,7 +71,7 @@ class RTrakt(commands.Cog):
             config.write(configfile)
 
         # Get the current user's Trakt account information
-        user = trakt.users.current()
+        user = trakt.users.me()
 
         # Get the currently playing media on the user's Trakt account
         playing = user.watching()
