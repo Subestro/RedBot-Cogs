@@ -57,7 +57,6 @@ class rTrakt(commands.Cog):
         with open('rTrakt_config.ini', 'w') as configfile:
             config.write(configfile)
 
-
     @commands.command(help="Set the OMDb API key")
     async def Rsetomdb(self, ctx, api_key: str):
         self.omdb_api_key = api_key
