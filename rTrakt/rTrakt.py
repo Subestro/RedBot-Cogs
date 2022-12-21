@@ -1,33 +1,36 @@
 import discord
 from redbot.core import commands
-import trakt
+import trakt.core
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.trakt_client = trakt.core.Client(client_id='YOUR_CLIENT_ID', client_secret='YOUR_CLIENT_SECRET')
 
     @commands.command()
-    async def set_trakt_keys(self, ctx, client_id: str, client_secret: str, access_token: str):
-        """Sets the Trakt API keys and access token."""
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.access_token = access_token
-        await ctx.send("Trakt API keys and access token set successfully!")
+    async def set_watching(self, ctx):
+        # Redirect the user to the Trakt authorization URL
+        auth_url = self.trakt_client.auth.authorization_url('urn:ietf:wg:oauth:2.0:oob')
+        await ctx.send(f'Please visit the following URL to authorize the bot to access your Trakt account: {auth_url}')
 
-    @commands.command()
-    async def update_presence(self, ctx):
-        # Authenticate with the Trakt Scrobbler API
-        trakt.init(self.client_id, self.client_secret)
-        access_token = trakt.auth.oauth(self.access_token)
+        # Wait for the user to enter the authorization code
+        def check(m):
+            return m.channel == ctx.channel and m.author == ctx.author
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+        except asyncio.TimeoutError:
+            return await ctx.send('Timed out waiting for authorization code.')
 
-        # Retrieve the details of the currently-playing media
-        scrobble_state = trakt.sync.scrobble.state(access_token)
+        # Exchange the authorization code for an access token
+        code = msg.content
+        access_token = self.trakt_client.auth.exchange_code_for_token(code)
+        self.trakt_client.set_access_token(access_token)
 
-        # Create a rich presence object based on the media type
-        if scrobble_state.type == "episode":
-            game = discord.Game(name=f"{scrobble_state.show.title} - S{scrobble_state.episode.season}E{scrobble_state.episode.number} - {scrobble_state.episode.title}", type=discord.ActivityType.watching)
-        elif scrobble_state.type == "movie":
-            game = discord.Game(name=f"{scrobble_state.movie.title}", type=discord.ActivityType.watching)
+        # Set the bot's rich presence to show what the user is currently watching
+        currently_watching = self.trakt_client.users.watching()
+        activity = discord.Game(name=currently_watching.item.title)
+        await self.bot.change_presence(activity=activity)
+        await ctx.send('Successfully set rich presence to show what you are currently watching.')
 
-        # Update the bot's rich presence
-        await self.bot.change_presence(activity=game)
+def setup(bot):
+    bot.add_cog(rTrakt(bot))
