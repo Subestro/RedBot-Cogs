@@ -1,0 +1,21 @@
+{
+    "name": "rTrakt",
+    "author": ["Subestro"],
+    "version": "1.0.0",
+    "short": "Shows your Trakt scrobbler status in the bot's rich presence.",
+    "description": "This cog integrates with the Trakt and OMDB APIs to show your currently playing media in the bot's rich presence. The user can authorize the Trakt API and set the OMDB API key using commands.",
+    "commands": [
+        {
+            "name": "rTraktAuth",
+            "aliases": [],
+            "brief": "Authorizes the Trakt API for your account.",
+            "description": "Displays an authorization link and prompts you to enter the authorization code to authorize the Trakt API for your account."
+        },
+        {
+            "name": "rOMDB",
+            "aliases": [],
+            "brief": "Sets the OMDB API key.",
+            "description": "Sets the OMDB API key to be used by the cog to retrieve movie and TV show posters."
+        }
+    ]
+}
