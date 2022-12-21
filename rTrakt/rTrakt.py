@@ -1,7 +1,7 @@
 import discord
-from discord.ext import commands
 import aiohttp
 import asyncio
+from redbot.core import commands
 from redbot.core.data_manager import basic_config
 
 class rTrakt(commands.Cog):
@@ -12,29 +12,14 @@ class rTrakt(commands.Cog):
         self.update_presence_task = asyncio.create_task(self.update_presence())
     
     @commands.command()
-    async def rTraktAuth(self, ctx):
-        auth_url = "https://trakt.tv/oauth/authorize?client_id=<client_id>&redirect_uri=<redirect_uri>&response_type=code"
-        embed = discord.Embed(title="Trakt API Authorization", description="Click the link below to authorize the Trakt API for your account. Once you have authorized the API, enter the code in the command to complete the process.", color=discord.Color.blue())
-        embed.add_field(name="Authorization Link", value=auth_url)
-        embed.set_footer(text="This link will expire in 10 minutes.")
-        await ctx.send(embed=embed)
-        
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
-        
-        try:
-            msg = await self.bot.wait_for("message", check=check, timeout=600.0)
-        except asyncio.TimeoutError:
-            await ctx.send("Authorization timed out. Please try again.")
-            return
-        
-        async with self.session.post("https://api.trakt.tv/oauth/token", data={
-            "code": msg.content,
-            "client_id": "<client_id>",
-            "client_secret": "<client_secret>",
-            "redirect_uri": "<redirect_uri>",
-            "grant_type": "authorization_code"
-            }) as resp:
+    async def rTraktAuth(self, ctx, code: str):
+        async with self.session.post("https://api.trakt.tv/oauth/token", json={
+            "client_id": "your_client_id",  # replace with your Trakt API client ID
+            "client_secret": "your_client_secret",  # replace with your Trakt API client secret
+            "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
+            "grant_type": "authorization_code",
+            "code": code
+        }) as resp:
             data = await resp.json()
             access_token = data["access_token"]
             refresh_token = data["refresh_token"]
@@ -74,14 +59,16 @@ class rTrakt(commands.Cog):
             # Create the rich presence object with the poster image
             presence = discord.RichPresence(
                 state=f"Watching {title} ({year})",
+            # Create the rich presence object with the poster image
+            presence = discord.RichPresence(
+                state=f"Watching {title} ({year})",
                 details="Trakt Scrobbler",
-                large_image="large_image_name",  # name of the large image asset
-                large_image_url=poster_url,
-                small_image="small_image_name",  # name of the small image asset
-                small_image_url=poster_url
+                large_image="poster",
+                large_image_url=poster_url
             )
-            
-            # Set the rich presence
+
+            # Set the bot's rich presence
             await self.bot.change_presence(activity=presence)
-            
+
+            # Sleep for 5 minutes before updating the presence again
             await asyncio.sleep(300)
