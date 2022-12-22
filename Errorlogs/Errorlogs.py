@@ -12,9 +12,12 @@ class Errorlogs(commands.Cog):
         self.config.register_global(**default_global)
 
     @commands.command()
-    async def error(self, ctx, channel: discord.TextChannel):
+    async def error(self, ctx, channel: discord.TextChannel = None):
+        if channel is None:
+           channel = ctx.channel
         await self.config.error_channel_id.set(channel.id)
         await ctx.send(f"Error channel set to {channel.mention}.")
+
 
     async def send_error(self, message: str):
         error_channel_id = await self.config.error_channel_id()
