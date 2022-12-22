@@ -17,7 +17,7 @@ class rTrakt(commands.Cog):
         await ctx.send("API credentials set successfully")
 
     @commands.command()
-    async def update_rich_presence(self):
+    async def update_rich_presence(self, ctx):
         # Fetch the current playback details from the trakt API
         response = requests.get(
             "https://api.trakt.tv/sync/playback",
