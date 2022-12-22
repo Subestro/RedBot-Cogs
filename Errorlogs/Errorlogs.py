@@ -1,23 +1,29 @@
 import discord
-from redbot.core import commands
+from redbot.core import Config, commands
 
 class Errorlogs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.error_channel = None
+        self.config = Config.get_conf(self, identifier=3393734172)
+        default_global = {
+            "error_channel_id": None
+        }
+        self.config.register_global(**default_global)
 
     @commands.command()
-    async def set_error_channel(self, ctx, channel_id: int):
+    async def error(self, ctx, channel_id: int):
         channel = discord.utils.get(ctx.guild.channels, id=channel_id)
         if channel is None:
             await ctx.send("Invalid channel ID.")
         else:
-            self.error_channel = channel
+            await self.config.error_channel_id.set(channel_id)
             await ctx.send(f"Error channel set to {channel.mention}.")
 
     async def send_error(self, message: str):
-        if self.error_channel is not None:
-            await self.error_channel.send(message)
+        error_channel_id = await self.config.error_channel_id()
+        if error_channel_id is not None:
+            error_channel = self.bot.get_channel(error_channel_id)
+            await error_channel.send(message)
 
 def setup(bot):
     bot.add_cog(Errorlogs(bot))
