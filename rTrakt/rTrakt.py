@@ -1,56 +1,71 @@
-import requests
 import discord
-from redbot.core import commands
-from redbot.core.bot import Red
+import aiohttp
+import asyncio
+import json
 
-class rTrakt(commands.Cog):
-    def __init__(self, bot: Red):
+class rTrakt:
+    def __init__(self, bot):
         self.bot = bot
-        self.api_key = None
-        self.api_secret = None
+        self.session = aiohttp.ClientSession()
+        self.update_presence.start()
 
-    @commands.is_owner()
-    @commands.command()
-    async def set_api_credentials(self, ctx, api_key: str, api_secret: str):
-        self.api_key = api_key
-        self.api_secret = api_secret
-        await ctx.send("API credentials set successfully")
+    def __unload(self):
+        self.update_presence.cancel()
+        asyncio.create_task(self.session.close())
 
-    @commands.command()
-    async def update_rich_presence(self, ctx):
-        # Fetch the current playback details from the trakt API
-        response = requests.get(
-            "https://api.trakt.tv/sync/playback",
-            headers={
-                "Content-Type": "application/json",
-                "trakt-api-key": self.api_key,
-                "trakt-api-version": "2",
-            },
-            auth=(self.api_key, self.api_secret),
-        )
+    @tasks.loop(minutes=5.0)
+    async def update_presence(self):
+        # Replace these values with your own client ID, client secret, and redirect URI
+        client_id = 'YOUR_CLIENT_ID'
+        client_secret = 'YOUR_CLIENT_SECRET'
+        redirect_uri = 'YOUR_REDIRECT_URI'
 
-        # Check for API errors
-        if response.status_code != 200:
-            print("API returned an error:", response.text)
-            return
-        if not response.text:
-            print("API returned an empty response")
-            return
+        # Get the authorization code
+        authorize_url = f'https://api.trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'
+        print(f'Visit the following URL to authorize the bot: {authorize_url}')
+        code = input('Enter the authorization code: ')
 
-        # Extract the show or movie title and current episode or scene
-        data = response.json()
-        title = data["item"]["title"]
-        details = f"{data['progress']} of {data['item']['episode']['title']}"
+        # Request an access token
+        token_url = 'https://api.trakt.tv/oauth/token'
+        payload = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri
+        }
+        headers = {'Content-Type': 'application/json'}
+        async with self.session.post(token_url, data=json.dumps(payload), headers=headers) as resp:
+            token_response = await resp.json()
+            access_token = token_response['access_token']
+            refresh_token = token_response['refresh_token']
+            print(f'Access token: {access_token}')
+            print(f'Refresh token: {refresh_token}')
 
-        # Create a rich presence activity
-        activity = discord.Activity(
-            type=discord.ActivityType.watching,
-            name=title,
-            details=details,
-        )
+        # Get the current watch status
+        playback_url = 'https://api.trakt.tv/sync/playback/current'
+        headers = {'Authorization': f'Bearer {access_token}'}
+        async with self.session.get(playback_url, headers=headers) as resp:
+            playback_response = await resp.json()
+            if playback_response['type'] == 'episode':
+                # Set the rich presence for a TV show episode
+                show_name = playback_response['show']['title']
+                episode_name = playback_response['episode']['title']
+                season_number = playback_response['episode']['season']
+                episode_number = playback_response['episode']['number']
+                activity_name = f'Watching {show_name} - S{season_number:02d}E{episode_number:02d}: {episode_name}'
+                activity_type = discord.ActivityType.watching
+            elif playback_response['type'] == 'movie':
+                # Set the rich presence for a movie
+                movie_name = playback_response['movie']['title']
+                activity_name = f'Watching {movie_name}'
+                activity_type = discord.ActivityType.watching
+            else:
+                # No current playback
+                activity_name = None
+                activity_type = None
 
-        # Update the bot's presence
-        await self.bot.change_presence(activity=activity)
-
-def setup(bot):
-    bot.add_cog(rTrakt(bot))
+        # Set the rich presence
+        if activity_name:
+            activity = discord.Activity(name=activity_name, type=activity_type)
+            await self.bot.set_activity()
