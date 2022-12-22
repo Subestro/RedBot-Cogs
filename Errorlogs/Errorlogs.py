@@ -30,7 +30,7 @@ class Errorlogs(commands.Cog):
         elif isinstance(error, commands.CommandInvokeError):
             original = error.original
             if isinstance(original, Exception):
-                await self.send_error(f"Redbot cog error: {original}")
+                await self.send_error(f"Redbot cog error:\n {original}")
             else:
                 await self.send_error(f"Error occurred in {ctx.command.qualified_name}: {error}")
         else:
