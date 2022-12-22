@@ -2,12 +2,12 @@
     "name": "Errorlogs",
     "author": "Subestro",
     "short": "A cog that logs errors to a specific channel.",
+    "install_msg": "Errorlogs cog installed! Use the `error` command to set the error channel.",
     "commands": [
       {
-        "name": "set_error_channel",
+        "name": "error",
         "description": "Sets the channel where errors will be logged."
       }
-    ],
-    "install_msg": "Errorlogs cog installed! Use the `set_error_channel` command to set the error channel."
+    ]
   }
   
