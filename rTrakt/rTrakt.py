@@ -15,6 +15,7 @@ class rTrakt(commands.Cog):
         self.config = Config.get_conf(self, identifier=9811198108111121, force_registration=True)
         self.config.register_global(client_id=None, client_secret=None, redirect_uri=None, access_token=None, refresh_token=None, access_token_expiry=None)
         self.session = aiohttp.ClientSession(loop=bot.loop)
+        self.auth_url = None  # Add this line to define auth_url as an attribute of the rTrakt cog
 
     async def setup(self, bot):
         """Set up the cog"""
@@ -27,7 +28,7 @@ class rTrakt(commands.Cog):
         redirect_uri = await self.config.redirect_uri()
 
         # Initiate the OAuth authentication process
-        self.auth_url = f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
+        self.auth_url = f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}" 
 
     @commands.command()
     async def traktauth(self, ctx):
