@@ -1,33 +1,23 @@
 import requests
 import discord
 from redbot.core import commands
-from redbot.core.bot import Red
-import redbot
 
-class rTrakt(redbot.core.bot.Cog):
-    def __init__(self, bot: Red):
-        self.bot = bot
-        self.api_key = None
-        self.api_secret = None
+# Your API key and secret
+API_KEY = "your_api_key"
+API_SECRET = "your_api_secret"
 
-    @commands.is_owner()
+class rTrakt(commands.Cog):
     @commands.command()
-    async def set_api_credentials(self, ctx, api_key: str, api_secret: str):
-        self.api_key = api_key
-        self.api_secret = api_secret
-        await ctx.send("API credentials set successfully")
-
-    @commands.command()
-    async def update_rich_presence(self):
+    async def update_rich_presence(self, ctx):
         # Fetch the current playback details from the trakt API
         response = requests.get(
             "https://api.trakt.tv/sync/playback",
             headers={
                 "Content-Type": "application/json",
-                "trakt-api-key": self.api_key,
+                "trakt-api-key": API_KEY,
                 "trakt-api-version": "2",
             },
-            auth=(self.api_key, self.api_secret),
+            auth=(API_KEY, API_SECRET),
         )
 
         # Extract the show or movie title and current episode or scene
@@ -42,7 +32,7 @@ class rTrakt(redbot.core.bot.Cog):
         )
 
         # Update the bot's presence
-        await self.bot.change_presence(activity=activity)
+        await ctx.bot.change_presence(activity=activity)
 
-# Add the cog to your Red bot
-bot.add_cog(rTrakt(bot))
+def setup(bot):
+    bot.add_cog(rTrakt())
