@@ -29,7 +29,7 @@ class Errorlogs(commands.Cog):
             return
         else:
             await self.send_error(f"Error occurred in {ctx.command.qualified_name}: {error}")
-            await self.send_error(f"Console error: {error}")
+            await self.send_error(f"Redbot console error: {error}")
 
 def setup(bot):
     bot.add_cog(Errorlogs(bot))
