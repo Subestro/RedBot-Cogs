@@ -2,6 +2,8 @@
 import requests
 import json
 import redbot.core
+import trakt
+
 
 # Configure the trakt API with your client ID and client secret
 trakt_client_id = "your_client_id"
