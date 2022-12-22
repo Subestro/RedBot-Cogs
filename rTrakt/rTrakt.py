@@ -1,72 +1,46 @@
-import discord
-import aiohttp
-import asyncio
+# Import the necessary libraries and modules
+import requests
 import json
-from redbot.core import tasks
+import redbot.core
 
+# Configure the trakt API with your client ID and client secret
+trakt_client_id = "your_client_id"
+trakt_client_secret = "your_client_secret"
+trakt_headers = {
+    "Content-Type": "application/json",
+    "trakt-api-key": trakt_client_id,
+    "trakt-api-version": "2"
+}
+
+@redbot.core.cog()
 class rTrakt:
     def __init__(self, bot):
         self.bot = bot
-        self.session = aiohttp.ClientSession()
-        self.update_presence.start()
+    
+    def update_scrobbler_status(self):
+        # Retrieve your current scrobbler status from the trakt API
+        scrobbler_response = requests.get("https://api.trakt.tv/sync/playback/latest", headers=trakt_headers)
+        scrobbler_data = scrobbler_response.json()
+        
+        # Extract the show or movie title and progress from the scrobbler data
+        if "show" in scrobbler_data:
+            # Extract show title and progress
+            show_title = scrobbler_data["show"]["title"]
+            show_progress = scrobbler_data["progress"]
+            scrobbler_status = f"Watching {show_title} - {show_progress}%"
+        elif "movie" in scrobbler_data:
+            # Extract movie title and progress
+            movie_title = scrobbler_data["movie"]["title"]
+            movie_progress = scrobbler_data["progress"]
+            scrobbler_status = f"Watching {movie_title} - {movie_progress}%"
+        else:
+            scrobbler_status = "Not watching anything"
+        
+        # Update the bot's rich presence with the scrobbler status
+        redbot.core.set_rich_presence(scrobbler_status)
 
-    def __unload(self):
-        self.update_presence.cancel()
-        asyncio.create_task(self.session.close())
+def setup(bot):
+    bot.add_cog(rTrakt(bot))
 
-    @tasks.loop(minutes=5.0)
-    async def update_presence(self):
-        # Replace these values with your own client ID, client secret, and redirect URI
-        client_id = 'YOUR_CLIENT_ID'
-        client_secret = 'YOUR_CLIENT_SECRET'
-        redirect_uri = 'YOUR_REDIRECT_URI'
-
-        # Get the authorization code
-        authorize_url = f'https://api.trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'
-        print(f'Visit the following URL to authorize the bot: {authorize_url}')
-        code = input('Enter the authorization code: ')
-
-        # Request an access token
-        token_url = 'https://api.trakt.tv/oauth/token'
-        payload = {
-            'grant_type': 'authorization_code',
-            'code': code,
-            'client_id': client_id,
-            'client_secret': client_secret,
-            'redirect_uri': redirect_uri
-        }
-        headers = {'Content-Type': 'application/json'}
-        async with self.session.post(token_url, data=json.dumps(payload), headers=headers) as resp:
-            token_response = await resp.json()
-            access_token = token_response['access_token']
-            refresh_token = token_response['refresh_token']
-            print(f'Access token: {access_token}')
-            print(f'Refresh token: {refresh_token}')
-
-        # Get the current watch status
-        playback_url = 'https://api.trakt.tv/sync/playback/current'
-        headers = {'Authorization': f'Bearer {access_token}'}
-        async with self.session.get(playback_url, headers=headers) as resp:
-            playback_response = await resp.json()
-            if playback_response['type'] == 'episode':
-                # Set the rich presence for a TV show episode
-                show_name = playback_response['show']['title']
-                episode_name = playback_response['episode']['title']
-                season_number = playback_response['episode']['season']
-                episode_number = playback_response['episode']['number']
-                activity_name = f'Watching {show_name} - S{season_number:02d}E{episode_number:02d}: {episode_name}'
-                activity_type = discord.ActivityType.watching
-            elif playback_response['type'] == 'movie':
-                # Set the rich presence for a movie
-                movie_name = playback_response['movie']['title']
-                activity_name = f'Watching {movie_name}'
-                activity_type = discord.ActivityType.watching
-            else:
-                # No current playback
-                activity_name = None
-                activity_type = None
-
-        # Set the rich presence
-        if activity_name:
-            activity = discord.Activity(name=activity_name, type=activity_type)
-            await self.bot.set_activity(activity)
+# Set the function to run every time you start watching something new
+trakt_api.on_start_watching(rTrakt.update_scrobbler_status)
