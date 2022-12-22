@@ -11,13 +11,9 @@ class Errorlogs(commands.Cog):
         self.config.register_global(**default_global)
 
     @commands.command()
-    async def error(self, ctx, channel_id: int):
-        channel = discord.utils.get(ctx.guild.channels, id=channel_id)
-        if channel is None:
-            await ctx.send("Invalid channel ID.")
-        else:
-            await self.config.error_channel_id.set(channel_id)
-            await ctx.send(f"Error channel set to {channel.mention}.")
+    async def error(self, ctx, channel: discord.TextChannel):
+        await self.config.error_channel_id.set(channel.id)
+        await ctx.send(f"Error channel set to {channel.mention}.")
 
     async def send_error(self, message: str):
         error_channel_id = await self.config.error_channel_id()
