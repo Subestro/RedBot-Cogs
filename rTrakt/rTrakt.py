@@ -31,10 +31,12 @@ class rTrakt(commands.Cog):
         self.auth_url = f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}" 
 
     @commands.command()
-    async def traktauth(self, ctx):
-        """Get the authorization URL for the Trakt API"""
-        await ctx.send(self.auth_url)
-
+    async def setauth(self, ctx, client_secret: str, client_id: str):
+        """Set the client secret and client ID in the config and set the redirect URI to "urn:ietf:wg:oauth:2.0:oob" by default"""
+        await self.config.redirect_uri.set("urn:ietf:wg:oauth:2.0:oob")
+        await self.config.client_secret.set(client_secret)
+        await self.config.client_id.set(client_id)
+        await ctx.send("Authentication settings saved.")
     @commands.command()
     async def traktauthcomplete(self, ctx, code: str):
         """Complete the OAuth authentication process"""
