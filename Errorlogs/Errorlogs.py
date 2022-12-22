@@ -1,5 +1,4 @@
 import discord
-import sys
 from redbot.core import Config, commands
 
 class Errorlogs(commands.Cog):
@@ -12,12 +11,9 @@ class Errorlogs(commands.Cog):
         self.config.register_global(**default_global)
 
     @commands.command()
-    async def error(self, ctx, channel: discord.TextChannel = None):
-        if channel is None:
-           channel = ctx.channel
+    async def error(self, ctx, channel: discord.TextChannel):
         await self.config.error_channel_id.set(channel.id)
         await ctx.send(f"Error channel set to {channel.mention}.")
-
 
     async def send_error(self, message: str):
         error_channel_id = await self.config.error_channel_id()
@@ -31,19 +27,14 @@ class Errorlogs(commands.Cog):
             return
         elif isinstance(error, commands.CheckFailure):
             return
+        elif isinstance(error, commands.CommandInvokeError):
+            original = error.original
+            if isinstance(original, Exception):
+                await self.send_error(f"Redbot cog error: {original}")
+            else:
+                await self.send_error(f"Error occurred in {ctx.command.qualified_name}: {error}")
         else:
             await self.send_error(f"Error occurred in {ctx.command.qualified_name}: {error}")
-            await self.send_error(f"Redbot console error: {error}")
-
-    def send_console_error(self, message: str):
-        try:
-            # Code that may cause an error
-            1 / 0
-        except Exception as e:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            error_message = f"Python console error: {e}\n"
-            error_message += "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-            self.send_error(error_message)
 
 def setup(bot):
     bot.add_cog(Errorlogs(bot))
