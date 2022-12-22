@@ -43,5 +43,6 @@ class rTrakt(commands.Cog):
         # Update the bot's presence
         await self.bot.change_presence(activity=activity)
 
+
 def setup(bot):
     bot.add_cog(rTrakt(bot))
