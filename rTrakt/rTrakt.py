@@ -1,50 +1,47 @@
+import requests
 import discord
-import pytrakt
-import requests
-import trakt
-import urllib.parse
 from redbot.core import commands
+from redbot.core.bot import Red
 
-import requests
+class rTrakt(redbot.core.bot.Cog):
+    def __init__(self, bot: Red):
+        self.bot = bot
+        self.api_key = None
+        self.api_secret = None
 
-@commands.command()
-async def watching(self, ctx, access_token=None):
-    # Check if the OAuth access token is present
-    if access_token is None:
-        # Send a message to the user with instructions on how to obtain the access token
-        embed = discord.Embed(
-            title="Access Token Required",
-            description="To use this command, you must provide a valid OAuth access token. You can obtain a token by visiting the following URL and following the instructions: https://trakt.tv/oauth/applications",
-            color=discord.Color.red()
+    @commands.is_owner()
+    @commands.command()
+    async def set_api_credentials(self, ctx, api_key: str, api_secret: str):
+        self.api_key = api_key
+        self.api_secret = api_secret
+        await ctx.send("API credentials set successfully")
+
+    @commands.command()
+    async def update_rich_presence(self):
+        # Fetch the current playback details from the trakt API
+        response = requests.get(
+            "https://api.trakt.tv/sync/playback",
+            headers={
+                "Content-Type": "application/json",
+                "trakt-api-key": self.api_key,
+                "trakt-api-version": "2",
+            },
+            auth=(self.api_key, self.api_secret),
         )
-        await ctx.send(embed=embed)
-        return
 
-    # Make a GET request to the /sync/playback endpoint
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
-    response = requests.get("https://api.trakt.tv/sync/playback", headers=headers)
+        # Extract the show or movie title and current episode or scene
+        title = response["item"]["title"]
+        details = f"{response['progress']} of {response['item']['episode']['title']}"
 
-    # Check the response status code
-    if response.status_code == 200:
-        # Parse the response data
-        data = response.json()
-
-        # Get the user's current activity
-        activity = data["item"]["title"]
-
-        # Create a new Game object with the user's current activity as the name
-        game = discord.Game(name=activity)
-
-        # Update the bot's rich presence with the new Game object
-        await self.bot.change_presence(activity=game)
-    else:
-        # If the request fails, send a message to the user
-        embed = discord.Embed(
-            title="Error",
-            description=f"An error occurred while trying to get your current playback activity. The status code was {response.status_code}.",
-            color=discord.Color.red()
+        # Create a rich presence activity
+        activity = discord.Activity(
+            type=discord.ActivityType.watching,
+            name=title,
+            details=details,
         )
-        await ctx.send(embed=embed)
+
+        # Update the bot's presence
+        await self.bot.change_presence(activity=activity)
+
+# Add the cog to your Red bot
+bot.add_cog(rTrakt(bot))
