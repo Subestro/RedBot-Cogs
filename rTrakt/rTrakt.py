@@ -30,8 +30,9 @@ class rTrakt(commands.Cog):
         )
 
         # Extract the show or movie title and current episode or scene
-        title = response["item"]["title"]
-        details = f"{response['progress']} of {response['item']['episode']['title']}"
+        data = response.json()
+        title = data["item"]["title"]
+        details = f"{data['progress']} of {data['item']['episode']['title']}"
 
         # Create a rich presence activity
         activity = discord.Activity(
@@ -42,7 +43,6 @@ class rTrakt(commands.Cog):
 
         # Update the bot's presence
         await self.bot.change_presence(activity=activity)
-
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
