@@ -21,5 +21,14 @@ class Errorlogs(commands.Cog):
             error_channel = self.bot.get_channel(error_channel_id)
             await error_channel.send(message)
 
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            await self.send_error(f"Error occurred in {ctx.command.qualified_name}: {error}")
+
 def setup(bot):
     bot.add_cog(Errorlogs(bot))
