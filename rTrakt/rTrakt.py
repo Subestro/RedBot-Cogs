@@ -12,7 +12,7 @@ class rTrakt(commands.Cog):
         self.config.register_global(**default_global)
         self.trakt_api_key = self.config.api_key()
         self.update_presence()
-        self.loop_task = self.bot.loop.create_task(self.loop())
+        self.loop_task = self.bot.loop.create_task(self.loop)
 
     async def update_presence(self):
         # Make a request to the Trakt API to retrieve the current scrobbler status
