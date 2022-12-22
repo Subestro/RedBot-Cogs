@@ -2,6 +2,7 @@ import discord
 import aiohttp
 import asyncio
 import json
+from redbot.core import tasks
 
 class rTrakt:
     def __init__(self, bot):
@@ -68,4 +69,4 @@ class rTrakt:
         # Set the rich presence
         if activity_name:
             activity = discord.Activity(name=activity_name, type=activity_type)
-            await self.bot.set_activity()
+            await self.bot.set_activity(activity)
