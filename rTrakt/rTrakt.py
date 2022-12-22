@@ -2,6 +2,7 @@ import requests
 import discord
 from redbot.core import commands
 from redbot.core.bot import Red
+import redbot
 
 class rTrakt(redbot.core.bot.Cog):
     def __init__(self, bot: Red):
