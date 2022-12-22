@@ -5,7 +5,7 @@ from discord.ext import commands
 from redbot.core import Config
 
 class rTrakt(commands.Cog):
-    async def __init__(self, bot):
+    def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=3393734173)
         default_global = {"api_key": None}
