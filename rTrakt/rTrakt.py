@@ -10,7 +10,7 @@ class rTrakt(commands.Cog):
         self.config = Config.get_conf(self, identifier=3393734173)
         default_global = {"api_key": None}
         self.config.register_global(**default_global)
-        self.trakt_api_key = await self.config.api_key()
+        self.trakt_api_key = self.config.api_key()
         self.update_presence()
         self.loop_task = self.bot.loop.create_task(self.loop())
 
