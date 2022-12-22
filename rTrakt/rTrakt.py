@@ -29,6 +29,14 @@ class rTrakt(commands.Cog):
             auth=(self.api_key, self.api_secret),
         )
 
+        # Check for API errors
+        if response.status_code != 200:
+            print("API returned an error:", response.text)
+            return
+        if not response.text:
+            print("API returned an empty response")
+            return
+
         # Extract the show or movie title and current episode or scene
         data = response.json()
         title = data["item"]["title"]
