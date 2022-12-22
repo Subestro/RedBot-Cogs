@@ -5,7 +5,6 @@ import redbot.core
 import redbot.ext.commands
 import trakt
 
-
 # Configure the trakt API with your client ID and client secret
 trakt_client_id = "your_client_id"
 trakt_client_secret = "your_client_secret"
@@ -14,9 +13,9 @@ trakt_headers = {
     "trakt-api-key": trakt_client_id,
     "trakt-api-version": "2"
 }
+trakt_api = trakt.Client(client_id=trakt_client_id, client_secret=trakt_client_secret)
 
-@redbot.core.cog()
-class rTrakt:
+class rTrakt(redbot.ext.commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
@@ -38,12 +37,11 @@ class rTrakt:
             scrobbler_status = f"Watching {movie_title} - {movie_progress}%"
         else:
             scrobbler_status = "Not watching anything"
-        
+
         # Update the bot's rich presence with the scrobbler status
         redbot.core.set_rich_presence(scrobbler_status)
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
-
-# Set the function to run every time you start watching something new
-trakt_api.on_start_watching(rTrakt.update_scrobbler_status)
+    # Set the function to run every time you start watching something new
+    trakt_api.on_start_watching(rTrakt.update_scrobbler_status)
