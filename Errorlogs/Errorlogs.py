@@ -1,4 +1,5 @@
 import discord
+import sys
 from redbot.core import Config, commands
 
 class Errorlogs(commands.Cog):
@@ -30,6 +31,16 @@ class Errorlogs(commands.Cog):
         else:
             await self.send_error(f"Error occurred in {ctx.command.qualified_name}: {error}")
             await self.send_error(f"Redbot console error: {error}")
+
+    def send_console_error(self, message: str):
+        try:
+            # Code that may cause an error
+            1 / 0
+        except Exception as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            error_message = f"Python console error: {e}\n"
+            error_message += "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            self.send_error(error_message)
 
 def setup(bot):
     bot.add_cog(Errorlogs(bot))
