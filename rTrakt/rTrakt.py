@@ -2,6 +2,7 @@
 import requests
 import json
 import redbot.core
+import redbot.ext.commands
 import trakt
 
 
