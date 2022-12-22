@@ -1,47 +1,48 @@
-# Import the necessary libraries and modules
+import asyncio
 import requests
-import json
-import redbot.core
-import redbot.ext.commands
-import trakt
+import discord
+from discord.ext import commands
+from redbot.core import Config
 
-# Configure the trakt API with your client ID and client secret
-trakt_client_id = "your_client_id"
-trakt_client_secret = "your_client_secret"
-trakt_headers = {
-    "Content-Type": "application/json",
-    "trakt-api-key": trakt_client_id,
-    "trakt-api-version": "2"
-}
-trakt_api = trakt.Client(client_id=trakt_client_id, client_secret=trakt_client_secret)
-
-class rTrakt(redbot.ext.commands.Cog):
+class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
-    def update_scrobbler_status(self):
-        # Retrieve your current scrobbler status from the trakt API
-        scrobbler_response = requests.get("https://api.trakt.tv/sync/playback/latest", headers=trakt_headers)
-        scrobbler_data = scrobbler_response.json()
-        
-        # Extract the show or movie title and progress from the scrobbler data
-        if "show" in scrobbler_data:
-            # Extract show title and progress
-            show_title = scrobbler_data["show"]["title"]
-            show_progress = scrobbler_data["progress"]
-            scrobbler_status = f"Watching {show_title} - {show_progress}%"
-        elif "movie" in scrobbler_data:
-            # Extract movie title and progress
-            movie_title = scrobbler_data["movie"]["title"]
-            movie_progress = scrobbler_data["progress"]
-            scrobbler_status = f"Watching {movie_title} - {movie_progress}%"
-        else:
-            scrobbler_status = "Not watching anything"
+        self.config = Config.get_conf(self, identifier=3393734173)
+        default_global = {"api_key": None}
+        self.config.register_global(**default_global)
+        self.trakt_api_key = await self.config.api_key()
+        self.update_presence()
+        self.loop_task = self.bot.loop.create_task(self.loop())
 
-        # Update the bot's rich presence with the scrobbler status
-        redbot.core.set_rich_presence(scrobbler_status)
+    async def update_presence(self):
+        # Make a request to the Trakt API to retrieve the current scrobbler status
+        headers = {
+            "Content-Type": "application/json",
+            "trakt-api-key": self.trakt_api_key,
+        }
+        response = requests.get("https://api.trakt.tv/users/me/watching", headers=headers)
+        data = response.json()
+
+        # If we're currently watching something, create an activity object and update the rich presence
+        if data["watching"]:
+            show = data["watching"]["show"]
+            episode = data["watching"]["episode"]
+            activity = discord.Activity(
+                name=f"{show['title']} - {episode['title']}",
+                type=discord.ActivityType.watching,
+            )
+            await self.bot.change_presence(activity=activity)
+
+    async def loop(self):
+        while True:
+            self.update_presence()
+            await asyncio.sleep(30)
+
+    @commands.command()
+    async def setapikey(self, ctx, api_key: str):
+        await self.config.api_key.set(api_key)
+        self.trakt_api_key = api_key
+        await ctx.send("Successfully set Trakt API key!")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
-    # Set the function to run every time you start watching something new
-    trakt_api.on_start_watching(rTrakt.update_scrobbler_status)
