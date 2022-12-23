@@ -29,6 +29,7 @@ class rIG(commands.Cog):
         await ctx.send('Credentials saved')
 
     async def check_followers(self):
+        await self.update_channel.send('Checking for changes in followers...')
         api = instagrapi.Client(await self.config.user_name(), await self.config.password())
         try:
             followers = api.followers()
