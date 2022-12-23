@@ -1,5 +1,5 @@
 import discord
-from redbot.core import commands
+from redbot.core import commands, Config
 import instagrapi
 import asyncio
 
@@ -7,23 +7,39 @@ class rIG(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.update_channel = None
-        self.config_data = {}
+        self.config = Config.get_conf(self, identifier=1337)
+        default_global = {
+            'user_name': None,
+            'password': None,
+            'update_channel': None,
+            'followers': []
+        }
+        self.config.register_global(**default_global)
 
     @commands.command()
     async def set_update_channel(self, ctx, channel: discord.TextChannel):
         self.update_channel = channel
+        await self.config.update_channel.set(channel.id)
         await ctx.send(f'Updates will be sent to {channel.mention}')
 
-    def check_followers(self, user_name, password):
-        api = instagrapi.Client(user_name, password)
+    @commands.command()
+    async def set_credentials(self, ctx, user_name: str, password: str):
+        await self.config.user_name.set(user_name)
+        await self.config.password.set(password)
+        await ctx.send('Credentials saved')
+
+    async def check_followers(self):
+        api = instagrapi.Client(await self.config.user_name(), await self.config.password())
         try:
             followers = api.followers()
-            if self.config_data['followers'] != followers:
-                changes = self.get_changes(self.config_data['followers'], followers)
+            if await self.config.followers() != followers:
+                changes = self.get_changes(await self.config.followers(), followers)
                 self.send_updates(changes)
-                self.config_data['followers'] = followers
+                await self.config.followers.set(followers)
         except instagrapi.exceptions.InstagramError as e:
             print(e)
+        await asyncio.sleep(60)  # check every 60 seconds
+        await self.check_followers()
 
     def get_changes(self, old_followers, new_followers):
         changes = {
@@ -47,16 +63,6 @@ class rIG(commands.Cog):
         for user in changes['followed']:
             message = f'{user} followed you'
             self.update_channel.send(message)
-
-    async def check_followers_loop(self):
-        while True:
-            self.check_followers(user_name, password)
-            await asyncio.sleep(3600) # check every hour
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print('Bot is ready!')
-        await self.check_followers_loop()
 
 def setup(bot):
     bot.add_cog(rIG(bot))
