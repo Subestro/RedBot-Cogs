@@ -1,0 +1,6 @@
+{
+    "name": "rIG",
+    "author": ["Subestro"],
+    "install_msg": "Thank you for installing the rIG cog!",
+    "short": "Sends updates on who unfollowed and followed you on Instagram"
+}
