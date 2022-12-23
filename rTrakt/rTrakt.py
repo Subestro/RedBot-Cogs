@@ -65,3 +65,5 @@ class rTrakt(commands.Cog):
 
             # Send a message to confirm that the authorization process is complete
             await ctx.send("Authorization process complete. You can now use the `traktstatus` command to get your scrobbler status.")
+def setup(bot):
+    bot.add_cog(rTrakt(bot))
