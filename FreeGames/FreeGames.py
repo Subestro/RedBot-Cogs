@@ -3,6 +3,7 @@ import json
 import requests
 from requests.exceptions import HTTPError, Timeout
 from redbot.core import commands
+import asyncio
 
 class Game:
     def __init__(self, name, url, poster_url, original_price):
@@ -11,6 +12,7 @@ class Game:
         self.poster_url = poster_url
         self.original_price = original_price
         
+
 class FreeGames(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -19,6 +21,29 @@ class FreeGames(commands.Cog):
         self.AUTHOR = "Default"
         self.URL = "https://www.epicgames.com/store/us-US/product/"
         self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US"
+        self.free_games_channel_id = None  # Initialize the channel ID to None
+
+    @commands.command()
+    async def set_free_games_channel(self, ctx, channel: discord.TextChannel):
+        """Sets the channel where free games will be announced."""
+        self.free_games_channel_id = channel.id
+        await ctx.send(f"Free games will now be announced in {channel.mention}.")
+
+    async def check_for_free_games(self):
+        """Periodically checks for new free games and sends a message if any are found."""
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            free_games = self.process_request(self.make_request())
+            if free_games:
+                channel = self.bot.get_channel(self.free_games_channel_id)
+                for game in free_games:
+                    embed = discord.Embed(title=game.name, color=0x00FFFF)
+                    embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
+                    embed.description = f"~~${game.original_price}~~ |**Free**"
+                    embed.add_field(name="Get Now", value=game.url, inline=True)
+                    embed.set_image(url=game.poster_url)
+                    await channel.send(embed=embed)
+            await asyncio.sleep(3600)  # Check for new games every hour
 
     @commands.command()
     async def get_free_games(self, ctx):
