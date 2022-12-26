@@ -1,15 +1,16 @@
 import discord
+import json
 import requests
 from requests.exceptions import HTTPError, Timeout
-from redbot.core import commands, config
+from redbot.core import commands
 import asyncio
 
 class Game:
-    def __init__(self, name, url, poster_url, free_until):
+    def __init__(self, name, url, poster_url, original_price):
         self.name = name
         self.url = url
         self.poster_url = poster_url
-        self.free_until = free_until
+        self.original_price = original_price
         
 
 class FreeGames(commands.Cog):
@@ -22,18 +23,10 @@ class FreeGames(commands.Cog):
         self.ENDPOINT = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US"
         self.free_games_channel_id = None  # Initialize the channel ID to None
 
-        # Set up the config settings for the cog
-        default_global = {
-            "free_games_channel_id": None
-        }
-        self.config = config.Config.get_conf(self, identifier=283472984728934, force_registration=True)
-        self.config.register_global(**default_global)
-
     @commands.command()
     async def set_free_games_channel(self, ctx, channel: discord.TextChannel):
         """Sets the channel where free games will be announced."""
-        # Store the channel ID in the config
-        await self.config.free_games_channel_id.set(channel.id)
+        self.free_games_channel_id = channel.id
         await ctx.send(f"Free games will now be announced in {channel.mention}.")
 
     async def check_for_free_games(self):
@@ -42,13 +35,11 @@ class FreeGames(commands.Cog):
         while not self.bot.is_closed():
             free_games = self.process_request(self.make_request())
             if free_games:
-                # Retrieve the channel ID from the config
-                channel_id = await self.config.free_games_channel_id()
-                channel = self.bot.get_channel(channel_id)
+                channel = self.bot.get_channel(self.free_games_channel_id)
                 for game in free_games:
                     embed = discord.Embed(title=game.name, color=0x00FFFF)
-                    embed.set_thumbnail(url="https://raw.githubusercontent.com/Subestro/RedBot-Cogs/development/FreeGames/Epic_Store_Logo.png")
-                    embed.description = f"**Free** until {game.free_until}"
+                    embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
+                    embed.description = f"~~${game.original_price}~~ |**Free**"
                     embed.add_field(name="Get Now", value=game.url, inline=True)
                     embed.set_image(url=game.poster_url)
                     await channel.send(embed=embed)
@@ -56,18 +47,16 @@ class FreeGames(commands.Cog):
 
     @commands.command()
     async def get_free_games(self, ctx):
-        free_games = self.process_request(self.make_request())
-
-        if not free_games:
-            await ctx.send("There are no free games available at this time.")
-            return
-
-        embed = discord.Embed(title="Free Games", color=0x00FFFF)
-        embed.set_thumbnail(url="https://raw.githubusercontent.com/Subestro/RedBot-Cogs/development/FreeGames/Epic_Store_Logo.png")
-        for game in free_games:
-            embed.add_field(name=game.name, value=f"Free until: **{game.original_price}**\nGet now: {game.url}", inline=False)
-            embed.set_image(url=game.poster_url)
-        await ctx.send(embed=embed)
+        def make_request():
+            """Makes the request and removes the unnecessary JSON data."""
+            try:
+                raw_data = requests.get(self.ENDPOINT)
+                raw_data = json.loads(raw_data.content)  # Bytes to json object
+                raw_data = raw_data["data"]["Catalog"]["searchStore"]["elements"]  # Cleans the data
+                return raw_data
+            except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
+                logger.error(f"Request to {self.SERVICE_NAME} by module '{self.MODULE_ID}' failed")
+                return False
 
         def process_request(raw_data):
             """Returns a list of free games from the raw data."""
@@ -77,13 +66,31 @@ class FreeGames(commands.Cog):
                 return False
             try:
                 for i in raw_data:
+                    # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
                     try:
                         if i["promotions"]["promotionalOffers"]:
-                            free_until = i["promotions"]["promotionalOffers"][0]["endDate"]
-                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], free_until)
+                            original_price = i["price"]["totalPrice"].get("originalPrice", 0)
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price)
                             processed_data.append(game)
                     except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
                         pass
-            except (KeyError, IndexError):
-                pass
+            except KeyError:
+                logger.exception(f"Data from module '{self.MODULE_ID}' couldn't be processed")
+
             return processed_data
+
+        # Get the list of free games
+        free_games = process_request(make_request())
+
+        # Send the list of free games in an embed
+        if free_games:
+            for game in free_games:
+                embed = discord.Embed(title=game.name, color=0x00FFFF)
+                embed.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Epic_games_store_logo.svg/800px-Epic_games_store_logo.svg.png")
+                embed.description = f"~~${game.original_price}~~ |**Free**"
+                embed.add_field(name="Get Now", value=game.url, inline=True)
+                embed.set_image(url=game.poster_url)
+                await ctx.send(embed=embed)
+        else:
+            await ctx.send("No free games could be found.")
+
