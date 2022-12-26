@@ -10,6 +10,7 @@ class Game:
         self.url = url
         self.poster_url = poster_url
         self.free_until = free_until
+        
 
 class FreeGames(commands.Cog):
     def __init__(self, bot):
@@ -55,32 +56,15 @@ class FreeGames(commands.Cog):
 
     @commands.command()
     async def get_free_games(self, ctx):
-        def make_request():
-            """Makes the request and removes the unnecessary JSON data."""
-            try:
-                raw_data = requests.get(self.ENDPOINT)
-                raw_data = json.loads(raw_data.content)  # Bytes to json object
-                raw_data = raw_data["data"]["Catalog"]["searchStore"]["elements"]  # Cleans the data
-                return raw_data
-            except (HTTPError, Timeout, requests.exceptions.ConnectionError, TypeError):
-                logger.error(f"Request to {self.SERVICE_NAME} by module '{self.MODULE_ID}' failed")
-                return False
+        free_games = self.process_request(self.make_request())
 
-        def process_request(raw_data):
-            """Returns a list of free games from the raw data."""
-            processed_data = []
+        if not free_games:
+            await ctx.send("There are no free games available at this time.")
+            return
 
-            if not raw_data:
-                return False
-            try:
-                for i in raw_data:
-                    try:
-                        if i["promotions"]["promotionalOffers"]:
-                            free_until = i["promotions"]["promotionalOffers"][0]["endDate"]
-                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], free_until)
-                            processed_data.append(game)
-                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
-                        pass
-            except KeyError:  # This gets executed when ["promotions"] does not exist
-                pass
-            return processed_data
+        embed = discord.Embed(title="Free Games", color=0x00FFFF)
+        embed.set_thumbnail(url="https://raw.githubusercontent.com/Subestro/RedBot-Cogs/development/FreeGames/Epic_Store_Logo.png")
+        for game in free_games:
+            embed.add_field(name=game.name, value=f"Free until: **{game.original_price}**\nGet now: {game.url}", inline=False)
+            embed.set_image(url=game.poster_url)
+        await ctx.send(embed=embed)
