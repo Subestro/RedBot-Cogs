@@ -5,12 +5,11 @@ from redbot.core import commands, config
 import asyncio
 
 class Game:
-    def __init__(self, name, url, poster_url, original_price):
+    def __init__(self, name, url, poster_url, free_until):
         self.name = name
         self.url = url
         self.poster_url = poster_url
-        self.original_price = original_price
-        
+        self.free_until = free_until
 
 class FreeGames(commands.Cog):
     def __init__(self, bot):
@@ -48,7 +47,7 @@ class FreeGames(commands.Cog):
                 for game in free_games:
                     embed = discord.Embed(title=game.name, color=0x00FFFF)
                     embed.set_thumbnail(url="https://raw.githubusercontent.com/Subestro/RedBot-Cogs/development/FreeGames/Epic_Store_Logo.png")
-                    embed.description = f"~~${game.original_price}~~ |**Free**"
+                    embed.description = f"**Free** until {game.free_until}"
                     embed.add_field(name="Get Now", value=game.url, inline=True)
                     embed.set_image(url=game.poster_url)
                     await channel.send(embed=embed)
@@ -75,29 +74,13 @@ class FreeGames(commands.Cog):
                 return False
             try:
                 for i in raw_data:
-                    # (i["price"]["totalPrice"]["discountPrice"] == i["price"]["totalPrice"]["originalPrice"]) != 0
                     try:
                         if i["promotions"]["promotionalOffers"]:
-                            original_price = i["price"]["totalPrice"].get("originalPrice", 0)
-                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], original_price)
+                            free_until = i["promotions"]["promotionalOffers"][0]["endDate"]
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], free_until)
                             processed_data.append(game)
-                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist...
-            except KeyError:
-                return False
+                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
+                        pass
+            except KeyError:  # This gets executed when ["promotions"] does not exist
+                pass
             return processed_data
-
-        # Get the list of free games
-        free_games = process_request(make_request())
-
-        # Send the list of free games in an embed
-        if free_games:
-            for game in free_games:
-                embed = discord.Embed(title=game.name, color=0x00FFFF)
-                embed.set_thumbnail(url="https://raw.githubusercontent.com/Subestro/RedBot-Cogs/development/FreeGames/Epic_Store_Logo.png")
-                embed.description = f"~~${game.original_price}~~ |**Free**"
-                embed.add_field(name="Get Now", value=game.url, inline=True)
-                embed.set_image(url=game.poster_url)
-                await ctx.send(embed=embed)
-        else:
-            await ctx.send("No free games could be found.")
-
