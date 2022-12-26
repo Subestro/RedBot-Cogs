@@ -68,3 +68,22 @@ class FreeGames(commands.Cog):
             embed.add_field(name=game.name, value=f"Free until: **{game.original_price}**\nGet now: {game.url}", inline=False)
             embed.set_image(url=game.poster_url)
         await ctx.send(embed=embed)
+
+        def process_request(raw_data):
+            """Returns a list of free games from the raw data."""
+            processed_data = []
+
+            if not raw_data:
+                return False
+            try:
+                for i in raw_data:
+                    try:
+                        if i["promotions"]["promotionalOffers"]:
+                            free_until = i["promotions"]["promotionalOffers"][0]["endDate"]
+                            game = Game(i["title"], str(self.URL + i["productSlug"]), i["keyImages"][1]["url"], free_until)
+                            processed_data.append(game)
+                    except TypeError:  # This gets executed when ["promotionalOffers"] is empty or does not exist
+                        pass
+            except (KeyError, IndexError):
+                pass
+            return processed_data
