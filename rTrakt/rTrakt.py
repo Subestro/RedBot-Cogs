@@ -63,7 +63,7 @@ class rTrakt(commands.Cog):
                 "client_id": client_id,
                 "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
             }
-            authorization_link = f"{authorization_url}?"
+            authorization_link = f"{authorization_url}?(params)"
 
             await ctx.send(f"Authorization link: {authorization_link}")
 
