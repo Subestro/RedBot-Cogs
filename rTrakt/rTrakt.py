@@ -9,6 +9,7 @@ from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from redbot.core import checks
 from redbot.core.utils.predicates import MessagePredicate
+from urllib.parse import urlencode
 
 class rTrakt(commands.Cog):
     def __init__(self, bot: Red):
@@ -63,7 +64,7 @@ class rTrakt(commands.Cog):
                 "client_id": client_id,
                 "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
             }
-            authorization_link = f"{authorization_url}?(params)"
+            authorization_link = f"{authorization_url}?{urlencode(params)}"
 
             await ctx.send(f"Authorization link: {authorization_link}")
 
