@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from redbot.core import Config
 from redbot.core.bot import Red
 from redbot.core import commands
@@ -9,10 +9,6 @@ from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from redbot.core import checks
 from redbot.core.utils.predicates import MessagePredicate
-
-# Add this import
-#from redbot.core.tasks import tasks
-
 
 class rTrakt(commands.Cog):
     def __init__(self, bot: Red):
