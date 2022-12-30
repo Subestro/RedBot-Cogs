@@ -1,69 +1,130 @@
-import aiohttp
 import discord
-import json
-import urllib.parse
-from discord.ext import commands
-from redbot.core import Config
+import aiohttp
+import asyncio
+from redbot.core import commands, Config, checks
+from redbot.core.utils.chat_formatting import box
+from redbot.core.data_manager import bundled_data_path
 
 class rTrakt(commands.Cog):
-    """Show the scrobbler status in the bot's rich presence"""
-
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=9811198108111121, force_registration=True)
-        self.config.register_global(client_id=None, client_secret=None, redirect_uri=None, access_token=None, refresh_token=None, access_token_expiry=None)
-        self.session = aiohttp.ClientSession(loop=bot.loop)
-        self.auth_url = None
+        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
+        default_global = {
+            "client_id": None,
+            "client_secret": None,
+            "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
+            "access_token": None,
+            "refresh_token": None,
+        }
+        self.config.register_global(**default_global)
 
-    @commands.command()
-    async def traktauth(self, ctx):
-        """Initiate the OAuth authentication process"""
-        # Get the client ID and redirect URI from the config
-        client_id = await self.config.client_id()
-        redirect_uri = await self.config.redirect_uri()
+        self.update_presence_task = self.bot.loop.create_task(self.update_presence())
 
-        # Generate the authorization URL
-        self.auth_url = f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
+    async def update_presence(self):
+        """Periodically update the bot's rich presence with the current scrobbler information."""
+        while not self.bot.is_closed():
+            client_id = await self.config.client_id()
+            client_secret = await self.config.client_secret()
+            access_token = await self.config.access_token()
+            if client_id and client_secret and access_token:
+                await set_trakt_scrobbler_presence(client_id, client_secret, access_token)
+            # Update the rich presence every 5 minutes
+            await asyncio.sleep(300)
 
-        # Send a message with the authorization URL to the user who invoked the command
-        await ctx.send(f"To authenticate with the Trakt API, visit this URL: {self.auth_url}")
+    @commands.group(name="trakt")
+    @checks.is_owner()
+    async def _trakt(self, ctx):
+        """Manage the Trakt scrobbler for the bot's rich presence."""
+        pass
 
-    @commands.command()
-    async def traktauthcomplete(self, ctx, authorization_code: str):
-        """Exchange the authorization code for an access token"""
-        # Get the client ID, client secret, and redirect URI from the config
+    @_trakt.command(name="generatecodes")
+    async def trakt_generatecodes(self, ctx):
+        """Generate the client ID and client secret for the Trakt API."""
+        # Replace this with the actual code for generating the client ID and client secret
+        client_id = "YOUR_CLIENT_ID_HERE"
+        client_secret = "YOUR_CLIENT_SECRET_HERE"
+        await self.config.client_id.set(client_id)
+        await self.config.client_secret.set(client_secret)
+        await ctx.send(f"Client ID: {client_id}\nClient secret: {client_secret}")
+
+    @_trakt.command(name="displaycode")
+    async def trakt_displaycode(self, ctx):
+        """Display the client ID and client secret for the Trakt API."""
         client_id = await self.config.client_id()
         client_secret = await self.config.client_secret()
+        if not client_id or not client_secret:
+            await ctx.send("The client ID and client secret have not been set yet. Use the `generatecodes` command to generate them.")
+        else:
+            await ctx.send(f"Client ID: {client_id}\nClient secret: {client_secret}")
+
+
+    @_trakt.command(name="pollauth")
+    async def trakt_pollauth(self, ctx):
+        """Poll for authorization to access the Trakt API."""
+        client_id = await self.config.client_id()
         redirect_uri = await self.config.redirect_uri()
+        # Replace this with the actual code for polling for authorization
+        await ctx.send(f"Visit the following URL to authorize the bot to access your Trakt account:\n\nhttps://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}")
 
-        # Build the request body
-        data = {
-            "grant_type": "authorization_code",
-            "code": authorization_code,
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "redirect_uri": redirect_uri
-        }
+    @_trakt.command(name="successauth")
+    async def trakt_successauth(self, ctx, access_token: str, refresh_token: str):
+        """Store the access and refresh tokens for the Trakt API."""
+        await self.config.access_token.set(access_token)
+        await self.config.refresh_token.set(refresh_token)
+        await ctx.send("Successfully authorized the bot to access your Trakt account.")
 
-        # Send a request to the Trakt API to exchange the authorization code for an access token
-        async with self.session.post("https://api.trakt.tv/oauth/token", data=data) as resp:
-            # Check if the request was successful
-            if resp.status != 200:
-                return await ctx.send("Failed to exchange authorization code for an access token. Please try again.")
 
-            # Get the access token and refresh token from the response
-            tokens = json.loads(await resp.text())
-            access_token = tokens["access_token"]
-            refresh_token = tokens["refresh_token"]
-            access_token_expiry = tokens["expires_in"]
+async def set_trakt_scrobbler_presence(bot, client_id, client_secret, access_token):
+    async with aiohttp.ClientSession() as session:
+        # Retrieve the current scrobbler information from the Trakt API
+        async with session.get("https://api.trakt.tv/sync/last_activities", headers={
+            "Content-Type": "application/json",
+            "trakt-api-key": client_id,
+            "trakt-api-version": "2",
+            "Authorization": f"Bearer {access_token}",
+        }) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                # Extract the relevant scrobbler information from the response
+                scrobbler_type = data["scrobbles"]["movie"]["last_activity_at"]
+                scrobbler_title = data["scrobbles"]["movie"]["last_watched_at"]
+                scrobbler_episode = data["scrobbles"]["episode"]["last_watched_at"]
+                if scrobbler_type == "movie":
+                    # Retrieve the movie's runtime from the Trakt API
+                    async with session.get(f"https://api.trakt.tv/movies/{scrobbler_title}", headers={
+                        "Content-Type": "application/json",
+                        "trakt-api-key": client_id,
+                        "trakt-api-version": "2",
+                        "Authorization": f"Bearer {access_token}",
+                    }) as resp:
+                        if resp.status == 200:
+                            movie_data = await resp.json()
+                            runtime = movie_data["runtime"]
+                            # Set the rich presence to show the movie that is currently being scrobbled, including the runtime
+                            presence = discord.Activity(name=scrobbler_title, type=discord.ActivityType.watching, details=f"{runtime} minutes")
+                            await bot.change_presence(activity=presence)
+                        else:
+                            print(f"Error retrieving movie information: {resp.status} {await resp.text()}")
+                elif scrobbler_type == "episode":
+                    # Retrieve the TV show's runtime from the Trakt API
+                    async with session.get(f"https://api.trakt.tv/shows/{scrobbler_title}", headers={
+                        "Content-Type": "application/json",
+                        "trakt-api-key": client_id,
+                        "trakt-api-version": "2",
+                                                "Authorization": f"Bearer {access_token}",
+                    }) as resp:
+                        if resp.status == 200:
+                            show_data = await resp.json()
+                            runtime = show_data["runtime"]
+                            # Set the rich presence to show the TV show and episode that is currently being scrobbled, including the runtime
+                            presence = discord.Activity(name=scrobbler_title, type=discord.ActivityType.watching, details=f"{scrobbler_episode} | {runtime} minutes")
+                            await bot.change_presence(activity=presence)
+                        else:
+                            print(f"Error retrieving show information: {resp.status} {await resp.text()}")
+            else:
+                print(f"Error retrieving scrobbler information: {resp.status} {await resp.text()}")
 
-            # Save the access token, refresh token, and access token expiry in the config
-            
-            await self.config.access_token.set(access_token)
-            await self.config.refresh_token.set(refresh_token)
-            await self.config.access_token_expiry.set(access_token_expiry)
-
-            # Send a message to confirm that the authorization process is complete
-            await ctx.send("Authorization process complete. You can now use the `traktstatus` command to get your scrobbler status.")
 def setup(bot):
     bot.add_cog(rTrakt(bot))
+
+
