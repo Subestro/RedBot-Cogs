@@ -11,7 +11,7 @@ from redbot.core import checks
 from redbot.core.utils.predicates import MessagePredicate
 
 # Add this import
-from redbot.core.tasks import tasks
+#from redbot.core.tasks import tasks
 
 
 class rTrakt(commands.Cog):
