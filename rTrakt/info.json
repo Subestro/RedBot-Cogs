@@ -3,19 +3,31 @@
     "author": ["Subestro"],
     "version": "1.0.0",
     "short": "Shows your Trakt scrobbler status in the bot's rich presence.",
-    "description": "This cog integrates with the Trakt and OMDB APIs to show your currently playing media in the bot's rich presence. The user can authorize the Trakt API and set the OMDB API key using commands.",
+    "description": "This cog integrates with the Trakt API to show your currently playing media in the bot's rich presence. The user can authorize the Trakt API using commands.",
     "commands": [
         {
-            "name": "rTraktAuth",
+            "name": "generatecodes",
             "aliases": [],
-            "brief": "Authorizes the Trakt API for your account.",
-            "description": "Displays an authorization link and prompts you to enter the authorization code to authorize the Trakt API for your account."
+            "brief": "Generates a new client ID and client secret for the Trakt API.",
+            "description": "Generates a new client ID and client secret for the Trakt API, and stores them in the cog's configuration."
         },
         {
-            "name": "rOMDB",
+            "name": "displaycode",
             "aliases": [],
-            "brief": "Sets the OMDB API key.",
-            "description": "Sets the OMDB API key to be used by the cog to retrieve movie and TV show posters."
+            "brief": "Displays the client ID and client secret for the Trakt API.",
+            "description": "Displays the client ID and client secret for the Trakt API that are currently stored in the cog's configuration."
+        },
+        {
+            "name": "pollauth",
+            "aliases": [],
+            "brief": "Polls for authorization to access the Trakt API.",
+            "description": "Displays an authorization link that can be used to authorize the bot to access the Trakt API for your account."
+        },
+        {
+            "name": "successauth",
+            "aliases": [],
+            "brief": "Stores the access and refresh tokens for the Trakt API.",
+            "description": "Stores the access and refresh tokens for the Trakt API in the cog's configuration, allowing the bot to access the Trakt API on behalf of your account."
         }
     ]
 }
