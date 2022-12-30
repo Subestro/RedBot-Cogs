@@ -8,7 +8,7 @@ from redbot.core.data_manager import bundled_data_path
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
+        self.config = Config.get_conf(self, identifier=8462457310, force_registration=True)
         default_global = {
             "client_id": None,
             "client_secret": None,
