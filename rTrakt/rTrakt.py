@@ -1,5 +1,6 @@
 import discord
-from redbot.core import Config, commands, tasks
+from redbot.core import Config
+from discord.ext import commands, tasks
 from redbot.core.data_manager import cog_data_path
 import requests
 import json
