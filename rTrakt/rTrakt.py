@@ -8,7 +8,7 @@ from redbot.core.bot import Red
 class rTrakt(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
+        self.config = Config.get_conf(self, identifier=1010011010, force_registration=True)
 
         default_global = {
             "client_id": None,
