@@ -15,6 +15,8 @@ class rTrakt(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1010011010, force_registration=True)
+        # Add a line to register the presence key
+        self.config.register_global(presence=None)
         self.config.register_global(
             client_id=None, client_secret=None, authorization_code=None,
             access_token=None, refresh_token=None,
