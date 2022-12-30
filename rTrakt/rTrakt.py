@@ -1,130 +1,142 @@
 import discord
 import aiohttp
-import asyncio
-from redbot.core import commands, Config, checks
-from redbot.core.utils.chat_formatting import box
-from redbot.core.data_manager import bundled_data_path
+from discord.ext import commands
+from redbot.core import Config, checks
+from redbot.core.bot import Red
 
-class rTrakt(commands.Cog):
-    def __init__(self, bot):
+
+class TraktScrobbler(commands.Cog):
+    def __init__(self, bot: Red):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=8462457310, force_registration=True)
+        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
+
         default_global = {
             "client_id": None,
             "client_secret": None,
-            "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
             "access_token": None,
             "refresh_token": None,
         }
         self.config.register_global(**default_global)
 
-        self.update_presence_task = self.bot.loop.create_task(self.update_presence())
-
-    async def update_presence(self):
-        """Periodically update the bot's rich presence with the current scrobbler information."""
-        while not self.bot.is_closed():
-            client_id = await self.config.client_id()
-            client_secret = await self.config.client_secret()
-            access_token = await self.config.access_token()
-            if client_id and client_secret and access_token:
-                await set_trakt_scrobbler_presence(client_id, client_secret, access_token)
-            # Update the rich presence every 5 minutes
-            await asyncio.sleep(300)
-
-    @commands.group(name="trakt")
+    @commands.group()
     @checks.is_owner()
-    async def _trakt(self, ctx):
-        """Manage the Trakt scrobbler for the bot's rich presence."""
+    async def _trakt(self, ctx: commands.Context):
+        """Trakt scrobbler commands."""
         pass
 
     @_trakt.command(name="generatecodes")
-    async def trakt_generatecodes(self, ctx):
-        """Generate the client ID and client secret for the Trakt API."""
-        # Replace this with the actual code for generating the client ID and client secret
-        client_id = "YOUR_CLIENT_ID_HERE"
-        client_secret = "YOUR_CLIENT_SECRET_HERE"
+    async def _generatecodes(self, ctx: commands.Context):
+        """Generates a new client ID and client secret for the Trakt API."""
+        # Generate a new client ID and client secret here
+        client_id = "your_generated_client_id"
+        client_secret = "your_generated_client_secret"
+
+        # Update the cog's configuration with the new client ID and client secret
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
-        await ctx.send(f"Client ID: {client_id}\nClient secret: {client_secret}")
+
+        await ctx.send(
+            f"Generated new client ID and client secret for the Trakt API:\nClient ID: {client_id}\nClient secret: {client_secret}"
+        )
+
+    @_trakt.command(name="setcodes")
+    async def _setcodes(self, ctx: commands.Context, client_id: str, client_secret: str):
+        """Sets the client ID and client secret for the Trakt API."""
+        # Update the cog's configuration with the new client ID and client secret
+        await self.config.client_id.set(client_id)
+        await self.config.client_secret.set(client_secret)
+        await ctx.send("Successfully set the client ID and client secret for the Trakt API.")
 
     @_trakt.command(name="displaycode")
-    async def trakt_displaycode(self, ctx):
-        """Display the client ID and client secret for the Trakt API."""
+    async def _displaycode(self, ctx: commands.Context):
+        """Displays the authorization link for the Trakt API."""
+        # Get the client ID and redirect URL from the cog's configuration
         client_id = await self.config.client_id()
-        client_secret = await self.config.client_secret()
-        if not client_id or not client_secret:
-            await ctx.send("The client ID and client secret have not been set yet. Use the `generatecodes` command to generate them.")
-        else:
-            await ctx.send(f"Client ID: {client_id}\nClient secret: {client_secret}")
+        redirect_url = "urn:ietf:wg:oauth:2.0:oob"
 
+        # Construct the authorization link
+        authorization_url = f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_url}"
+
+        await ctx.send(f"To authorize the Trakt API, visit the following link and enter the authorization code:\n{authorization_url}")
 
     @_trakt.command(name="pollauth")
-    async def trakt_pollauth(self, ctx):
-        """Poll for authorization to access the Trakt API."""
+    async def _pollauth(self, ctx: commands.Context):
+        """Polls for authorization of the Trakt API."""
+        # Get the client ID, client secret, and authorization code from the cog's configuration
         client_id = await self.config.client_id()
-        redirect_uri = await self.config.redirect_uri()
-        # Replace this with the actual code for polling for authorization
-        await ctx.send(f"Visit the following URL to authorize the bot to access your Trakt account:\n\nhttps://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}")
+        client_secret = await self.config.client_secret()
+        authorization_code = await self.config.authorization_code()
+
+        # Construct the authorization URL
+        authorization_url = "https://api.trakt.tv/oauth/token"
+
+        # Construct the request payload
+        payload = {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
+            "code": authorization_code,
+            "grant_type": "authorization_code",
+        }
+
+        # Send the authorization request
+        async with aiohttp.ClientSession() as session:
+            async with session.post(authorization_url, data=payload) as resp:
+                if resp.status == 200:
+                    response_json = await resp.json()
+                    access_token = response_json["access_token"]
+                    refresh_token = response_json["refresh_token"]
+
+                    # Update the cog's configuration with the new access and refresh tokens
+                    await self.config.access_token.set(access_token)
+                    await self.config.refresh_token.set(refresh_token)
+                    await ctx.send("Successfully authorized the Trakt API.")
+                else:
+                    await ctx.send("Failed to authorize the Trakt API. Please check your authorization code and try again.")
 
     @_trakt.command(name="successauth")
-    async def trakt_successauth(self, ctx, access_token: str, refresh_token: str):
-        """Store the access and refresh tokens for the Trakt API."""
-        await self.config.access_token.set(access_token)
-        await self.config.refresh_token.set(refresh_token)
-        await ctx.send("Successfully authorized the bot to access your Trakt account.")
+    async def _successauth(self, ctx: commands.Context):
+        """Displays a success message if the Trakt API has been successfully authorized."""
+        access_token = await self.config.access_token()
+        if access_token:
+            await ctx.send("The Trakt API has been successfully authorized.")
+        else:
+            await ctx.send("The Trakt API has not yet been authorized. Please use the `[p]trakt pollauth` command to poll for authorization.")
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # Get the access token from the cog's configuration
+        access_token = await self.config.access_token()
 
-async def set_trakt_scrobbler_presence(bot, client_id, client_secret, access_token):
-    async with aiohttp.ClientSession() as session:
-        # Retrieve the current scrobbler information from the Trakt API
-        async with session.get("https://api.trakt.tv/sync/last_activities", headers={
+        # Construct the headers for the request
+        headers = {
             "Content-Type": "application/json",
-            "trakt-api-key": client_id,
+            "trakt-api-key": "{client_id}",
             "trakt-api-version": "2",
             "Authorization": f"Bearer {access_token}",
-        }) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                # Extract the relevant scrobbler information from the response
-                scrobbler_type = data["scrobbles"]["movie"]["last_activity_at"]
-                scrobbler_title = data["scrobbles"]["movie"]["last_watched_at"]
-                scrobbler_episode = data["scrobbles"]["episode"]["last_watched_at"]
-                if scrobbler_type == "movie":
-                    # Retrieve the movie's runtime from the Trakt API
-                    async with session.get(f"https://api.trakt.tv/movies/{scrobbler_title}", headers={
-                        "Content-Type": "application/json",
-                        "trakt-api-key": client_id,
-                        "trakt-api-version": "2",
-                        "Authorization": f"Bearer {access_token}",
-                    }) as resp:
-                        if resp.status == 200:
-                            movie_data = await resp.json()
-                            runtime = movie_data["runtime"]
-                            # Set the rich presence to show the movie that is currently being scrobbled, including the runtime
-                            presence = discord.Activity(name=scrobbler_title, type=discord.ActivityType.watching, details=f"{runtime} minutes")
-                            await bot.change_presence(activity=presence)
-                        else:
-                            print(f"Error retrieving movie information: {resp.status} {await resp.text()}")
-                elif scrobbler_type == "episode":
-                    # Retrieve the TV show's runtime from the Trakt API
-                    async with session.get(f"https://api.trakt.tv/shows/{scrobbler_title}", headers={
-                        "Content-Type": "application/json",
-                        "trakt-api-key": client_id,
-                        "trakt-api-version": "2",
-                                                "Authorization": f"Bearer {access_token}",
-                    }) as resp:
-                        if resp.status == 200:
-                            show_data = await resp.json()
-                            runtime = show_data["runtime"]
-                            # Set the rich presence to show the TV show and episode that is currently being scrobbled, including the runtime
-                            presence = discord.Activity(name=scrobbler_title, type=discord.ActivityType.watching, details=f"{scrobbler_episode} | {runtime} minutes")
-                            await bot.change_presence(activity=presence)
-                        else:
-                            print(f"Error retrieving show information: {resp.status} {await resp.text()}")
-            else:
-                print(f"Error retrieving scrobbler information: {resp.status} {await resp.text()}")
+        }
 
-def setup(bot):
-    bot.add_cog(rTrakt(bot))
+        # Send a request to the Trakt API to get the user's currently playing media
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://api.trakt.tv/sync/playback", headers=headers) as resp:
+                if resp.status == 200:
+                    response_json = await resp.json()
+                    # Get the user's currently playing media from the response
+                    media = response_json[0]["movie"] or response_json[0]["episode"]
 
+                    # Construct the rich presence message
+                    if media["type"] == "movie":
+                        presence_message = f"Watching {media['title']} ({media['year']})"
+                    else:
+                        presence_message = f"Watching {media['show']['title']} S{media['season']:02d}E{media['number']:02d} - {media['title']}"
+
+                    # Set the rich presence message
+                    presence = discord.Activity(name=presence_message, type=discord.ActivityType.watching)
+                    await self.bot.change_presence(activity=presence)
+                else:
+                    # If the request fails, clear the rich presence message
+                    await self.bot.change_presence(activity=None)
+
+def setup(bot: Red):
+    bot.add_cog(TraktScrobbler(bot))
 
