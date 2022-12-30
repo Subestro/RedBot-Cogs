@@ -5,7 +5,7 @@ from redbot.core import Config, checks
 from redbot.core.bot import Red
 
 
-class TraktScrobbler(commands.Cog):
+class rTrakt(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
@@ -138,5 +138,5 @@ class TraktScrobbler(commands.Cog):
                     await self.bot.change_presence(activity=None)
 
 def setup(bot: Red):
-    bot.add_cog(TraktScrobbler(bot))
+    bot.add_cog(rTrakt(bot))
 
