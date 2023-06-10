@@ -1,4 +1,4 @@
-from .rTrakt import rTraktCog
+from .rTrakt import rTrakt
 
 def setup(bot):
-    bot.add_cog(rTraktCog(bot))
+    bot.add_cog(rTrakt(bot))
