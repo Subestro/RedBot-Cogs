@@ -5,6 +5,7 @@ import asyncio
 import aiohttp
 
 TRAKT_API_URL = "https://api.trakt.tv"
+TRAKT_AUTH_URL = "https://trakt.tv/oauth/token"
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
@@ -15,7 +16,9 @@ class rTrakt(commands.Cog):
             "client_id": "",
             "client_secret": "",
             "channel_id": None,
-            "last_activity_timestamp": 0,
+            "access_token": "",
+            "refresh_token": "",
+            "expires_at": 0,
         }
         self.config.register_global(**default_config)
 
@@ -30,44 +33,47 @@ class rTrakt(commands.Cog):
         await self.bot.wait_until_ready()
 
         while not self.bot.is_closed():
-            client_id = await self.config.client_id()
-            client_secret = await self.config.client_secret()
-            headers = {
-                "Content-Type": "application/json",
-                "trakt-api-key": client_id,
-                "trakt-api-version": "2",
-            }
-            url = f"{TRAKT_API_URL}/sync/last_activities"
+            access_token = await self.config.access_token()
+            refresh_token = await self.config.refresh_token()
+            expires_at = await self.config.expires_at()
 
-            try:
-                async with self.session.get(url, headers=headers) as response:
-                    response.raise_for_status()
+            if access_token and expires_at > asyncio.get_event_loop().time():
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {access_token}",
+                    "trakt-api-version": "2",
+                }
+                url = f"{TRAKT_API_URL}/sync/last_activities"
 
-                    activities_data = await response.json()
-                    if activities_data:
-                        last_activity = activities_data[0]
-                        last_activity_timestamp = last_activity.get("watched_at", 0)
-                        stored_timestamp = await self.config.last_activity_timestamp()
+                try:
+                    async with self.session.get(url, headers=headers) as response:
+                        response.raise_for_status()
 
-                        if last_activity_timestamp > stored_timestamp:
-                            await self.config.last_activity_timestamp.set(last_activity_timestamp)
+                        activities_data = await response.json()
+                        if activities_data:
+                            last_activity = activities_data[0]
+                            last_activity_timestamp = last_activity.get("watched_at", 0)
+                            stored_timestamp = await self.config.last_activity_timestamp()
 
-                            if last_activity["type"] == "episode":
-                                show_title = last_activity["show"]["title"]
-                                season_number = last_activity["episode"]["season"]
-                                episode_number = last_activity["episode"]["number"]
-                                message = f"Currently watching: {show_title} - Season {season_number}, Episode {episode_number}"
-                                channel_id = await self.config.channel_id()
-                                channel = self.bot.get_channel(channel_id)
-                                if channel:
-                                    await channel.send(message)
+                            if last_activity_timestamp > stored_timestamp:
+                                await self.config.last_activity_timestamp.set(last_activity_timestamp)
 
-            except Exception as e:
-                error_message = f"An error occurred while checking Trakt activity: {e}"
-                channel_id = await self.config.channel_id()
-                channel = self.bot.get_channel(channel_id)
-                if channel:
-                    await channel.send(error_message)
+                                if last_activity["type"] == "episode":
+                                    show_title = last_activity["show"]["title"]
+                                    season_number = last_activity["episode"]["season"]
+                                    episode_number = last_activity["episode"]["number"]
+                                    message = f"Currently watching: {show_title} - Season {season_number}, Episode {episode_number}"
+                                    channel_id = await self.config.channel_id()
+                                    channel = self.bot.get_channel(channel_id)
+                                    if channel:
+                                        await channel.send(message)
+
+                except Exception as e:
+                    error_message = f"An error occurred while checking Trakt activity: {e}"
+                    channel_id = await self.config.channel_id()
+                    channel = self.bot.get_channel(channel_id)
+                    if channel:
+                        await channel.send(error_message)
 
             # Wait for 5 seconds before checking again
             await asyncio.sleep(5)
@@ -81,20 +87,26 @@ class rTrakt(commands.Cog):
         client_secret = await self.config.client_secret()
         headers = {
             "Content-Type": "application/json",
-            "trakt-api-key": client_id,
             "trakt-api-version": "2",
         }
-        url = f"{TRAKT_API_URL}/sync/last_activities"
+        data = {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "grant_type": "client_credentials",
+        }
 
         try:
-            async with self.session.get(url, headers=headers) as response:
+            async with self.session.post(TRAKT_AUTH_URL, headers=headers, json=data) as response:
                 response.raise_for_status()
+                auth_data = await response.json()
+                access_token = auth_data.get("access_token")
+                refresh_token = auth_data.get("refresh_token")
+                expires_in = auth_data.get("expires_in")
+                expires_at = asyncio.get_event_loop().time() + expires_in
 
-                activities_data = await response.json()
-                if activities_data:
-                    last_activity = activities_data[0]
-                    last_activity_timestamp = last_activity.get("watched_at", 0)
-                    await self.config.last_activity_timestamp.set(last_activity_timestamp)
+                await self.config.access_token.set(access_token)
+                await self.config.refresh_token.set(refresh_token)
+                await self.config.expires_at.set(expires_at)
 
         except Exception as e:
             error_message = f"An error occurred while initializing Trakt: {e}"
