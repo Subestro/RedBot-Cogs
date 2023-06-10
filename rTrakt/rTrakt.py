@@ -1,41 +1,86 @@
+import json
 import discord
-from discord.ext import commands
-from redbot.core import Config
+import requests
+from redbot.core import Config, commands
+
+TRAKT_API_URL = "https://api.trakt.tv"
+RICH_PRESENCE_ACTIVITY_TYPE = 2  # Watching
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with your own identifier
-        default_global = {
-            "trakt_client_id": "",
-            "trakt_client_secret": "",
-            "trakt_refresh_token": "",
-            "discord_channel_id": 0  # Default channel ID
+        self.config = Config.get_conf(self, identifier=123332890)  # Change the identifier to a unique value
+
+        default_config = {
+            "client_id": "",
+            "client_secret": "",
         }
-        self.config.register_global(**default_global)
+        self.config.register_global(**default_config)
 
     @commands.Cog.listener()
     async def on_ready(self):
-        pass
+        await self.bot.wait_until_ready()
+        await self.setup_rich_presence()
+
+    async def setup_rich_presence(self):
+        client_id = await self.config.client_id()
+        client_secret = await self.config.client_secret()
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {client_secret}",
+        }
+        data = {
+            "pid": 1,  # Rich presence ID (choose any unique integer)
+            "activity": {
+                "details": "Not watching anything",
+                "timestamps": {"start": 0},
+                "assets": {"large_image": "default"},
+            },
+        }
+        await self.bot.http.request(
+            discord.http.Route("POST", f"/v8/applications/{client_id}/rich-presence/{RICH_PRESENCE_ACTIVITY_TYPE}"),
+            headers=headers,
+            json=data,
+        )
 
     @commands.command()
     @commands.is_owner()
-    async def setchannel(self, ctx, channel: discord.TextChannel):
-        await self.config.discord_channel_id.set(channel.id)
-        await ctx.send(f"Channel set to: {channel.mention}")
+    async def set_trakt_secrets(self, ctx, client_id: str, client_secret: str):
+        await self.config.client_id.set(client_id)
+        await self.config.client_secret.set(client_secret)
+        await ctx.send("Trakt secrets have been set and saved.")
 
-    @commands.command()
-    @commands.is_owner()
-    async def settraktcredentials(self, ctx, client_id, client_secret):
-        await self.config.trakt_client_id.set(client_id)
-        await self.config.trakt_client_secret.set(client_secret)
-        await ctx.send("Trakt credentials set successfully.")
+    @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        if before == self.bot.user and before.activities != after.activities:
+            for activity in after.activities:
+                if (
+                    isinstance(activity, discord.CustomActivity)
+                    and activity.name == "Watching"
+                    and activity.type == discord.ActivityType.streaming
+                ):
+                    await self.send_trakt_message(activity)
 
-    @commands.command()
-    @commands.is_owner()
-    async def settraktchannel(self, ctx, channel: discord.TextChannel):
-        await self.config.discord_channel_id.set(channel.id)
-        await ctx.send(f"Trakt channel set to: {channel.mention}")
+    async def send_trakt_message(self, activity):
+        client_id = await self.config.client_id()
+        client_secret = await self.config.client_secret()
+        headers = {
+            "Content-Type": "application/json",
+            "trakt-api-key": client_id,
+            "trakt-api-version": "2",
+        }
+        url = f"{TRAKT_API_URL}/sync/playback/stop"
+        payload = {
+            "progress": 100,
+            "episode": {"ids": {"trakt": activity.episode_id}},
+            "movie": {"ids": {"trakt": activity.movie_id}},
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        if response.status_code == 200:
+            channel = self.bot.get_channel(YOUR_CHANNEL_ID)  # Replace with your #general channel ID
+            if channel:
+                await channel.send(f"Currently watching: {activity.details}")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
