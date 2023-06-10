@@ -14,6 +14,7 @@ class rTrakt(commands.Cog):
         default_config = {
             "client_id": "",
             "client_secret": "",
+            "channel_id": None,
         }
         self.config.register_global(**default_config)
 
@@ -50,6 +51,12 @@ class rTrakt(commands.Cog):
         await self.config.client_secret.set(client_secret)
         await ctx.send("Trakt secrets have been set and saved.")
 
+    @commands.command()
+    @commands.is_owner()
+    async def set_trakt_channel(self, ctx, channel: discord.TextChannel):
+        await self.config.channel_id.set(channel.id)
+        await ctx.send(f"Trakt channel has been set to {channel.mention} and saved.")
+
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if before == self.bot.user and before.activities != after.activities:
@@ -76,7 +83,8 @@ class rTrakt(commands.Cog):
             playback_data = response.json()
             if playback_data:
                 current_item = playback_data[0]
-                channel = self.bot.get_channel(YOUR_CHANNEL_ID)  # Replace with your #general channel ID
+                channel_id = await self.config.channel_id()
+                channel = self.bot.get_channel(channel_id)
                 if channel:
                     message = f"Currently watching: {current_item['title']} ({current_item['year']})"
                     await channel.send(message)
