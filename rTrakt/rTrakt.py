@@ -2,6 +2,7 @@ import discord
 import requests
 from redbot.core import Config, commands
 import asyncio
+import aiohttp
 
 TRAKT_API_URL = "https://api.trakt.tv"
 
@@ -18,9 +19,11 @@ class rTrakt(commands.Cog):
         }
         self.config.register_global(**default_config)
 
+        self.session = aiohttp.ClientSession()
         self.background_task = self.bot.loop.create_task(self.check_trakt_activity())
 
     def cog_unload(self):
+        self.bot.loop.create_task(self.session.close())
         self.background_task.cancel()
 
     async def check_trakt_activity(self):
@@ -37,27 +40,27 @@ class rTrakt(commands.Cog):
             url = f"{TRAKT_API_URL}/sync/last_activities"
 
             try:
-                response = await self.bot.session.get(url, headers=headers)  # Await the HTTP request
-                response.raise_for_status()  # Raise an exception if the request is not successful
+                async with self.session.get(url, headers=headers) as response:
+                    response.raise_for_status()
 
-                activities_data = await response.json()
-                if activities_data:
-                    last_activity = activities_data[0]
-                    last_activity_timestamp = last_activity.get("watched_at", 0)
-                    stored_timestamp = await self.config.last_activity_timestamp()
+                    activities_data = await response.json()
+                    if activities_data:
+                        last_activity = activities_data[0]
+                        last_activity_timestamp = last_activity.get("watched_at", 0)
+                        stored_timestamp = await self.config.last_activity_timestamp()
 
-                    if last_activity_timestamp > stored_timestamp:
-                        await self.config.last_activity_timestamp.set(last_activity_timestamp)
+                        if last_activity_timestamp > stored_timestamp:
+                            await self.config.last_activity_timestamp.set(last_activity_timestamp)
 
-                        if last_activity["type"] == "episode":
-                            show_title = last_activity["show"]["title"]
-                            season_number = last_activity["episode"]["season"]
-                            episode_number = last_activity["episode"]["number"]
-                            message = f"Currently watching: {show_title} - Season {season_number}, Episode {episode_number}"
-                            channel_id = await self.config.channel_id()
-                            channel = self.bot.get_channel(channel_id)
-                            if channel:
-                                await channel.send(message)
+                            if last_activity["type"] == "episode":
+                                show_title = last_activity["show"]["title"]
+                                season_number = last_activity["episode"]["season"]
+                                episode_number = last_activity["episode"]["number"]
+                                message = f"Currently watching: {show_title} - Season {season_number}, Episode {episode_number}"
+                                channel_id = await self.config.channel_id()
+                                channel = self.bot.get_channel(channel_id)
+                                if channel:
+                                    await channel.send(message)
 
             except Exception as e:
                 error_message = f"An error occurred while checking Trakt activity: {e}"
@@ -84,14 +87,14 @@ class rTrakt(commands.Cog):
         url = f"{TRAKT_API_URL}/sync/last_activities"
 
         try:
-            response = await self.bot.session.get(url, headers=headers)  # Await the HTTP request
-            response.raise_for_status()  # Raise an exception if the request is not successful
+            async with self.session.get(url, headers=headers) as response:
+                response.raise_for_status()
 
-            activities_data = await response.json()
-            if activities_data:
-                last_activity = activities_data[0]
-                last_activity_timestamp = last_activity.get("watched_at", 0)
-                await self.config.last_activity_timestamp.set(last_activity_timestamp)
+                activities_data = await response.json()
+                if activities_data:
+                    last_activity = activities_data[0]
+                    last_activity_timestamp = last_activity.get("watched_at", 0)
+                    await self.config.last_activity_timestamp.set(last_activity_timestamp)
 
         except Exception as e:
             error_message = f"An error occurred while initializing Trakt: {e}"
