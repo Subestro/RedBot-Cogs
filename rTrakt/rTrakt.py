@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from redbot.core import Config
 
-class rTrakt(commands.Cog):
+class rTraktCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)  # Replace with your own identifier
@@ -38,4 +38,4 @@ class rTrakt(commands.Cog):
         await ctx.send(f"Trakt channel set to: {channel.mention}")
 
 def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    bot.add_cog(rTraktCog(bot))
