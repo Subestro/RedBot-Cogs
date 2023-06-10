@@ -7,7 +7,10 @@
     "tags": ["trakt", "scrobbling", "notifications"],
     "hidden": false,
     "commands": [
-        {"name": "set_trakt_secrets", "description": "Set Trakt API secrets", "usage": "<client_id> <client_secret>"}
+        {
+            "name": "set_trakt_secrets",
+            "description": "Set Trakt API secrets",
+            "usage": "<client_id> <client_secret>"
+        }
     ]
 }
-
