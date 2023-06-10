@@ -1,6 +1,7 @@
 import discord
 from redbot.core import Config, commands
 import webbrowser
+import aiohttp
 
 TRAKT_AUTH_URL = "https://trakt.tv/oauth/authorize"
 
@@ -23,6 +24,11 @@ class rTrakt(commands.Cog):
         channel = self.bot.get_channel(channel_id)
         if channel:
             await channel.send(error_message)
+
+    async def get_session(self):
+        if not hasattr(self.bot, "session") or self.bot.session.closed:
+            self.bot.session = aiohttp.ClientSession()
+        return self.bot.session
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -77,7 +83,8 @@ class rTrakt(commands.Cog):
                 "redirect_uri": redirect_uri,
                 "grant_type": "authorization_code",
             }
-            response = await self.bot.session.post(TRAKT_AUTH_URL, headers=headers, json=data)
+            session = await self.get_session()
+            response = await session.post(TRAKT_AUTH_URL, headers=headers, json=data)
             auth_data = await response.json()
 
             if response.status == 200:
