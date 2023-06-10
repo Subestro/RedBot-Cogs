@@ -8,7 +8,6 @@
     "Red-DiscordBot": ">=3.5.0",
     "aiohttp": ">=3.7.4"
   },
-  "required_cogs": [],
   "min_bot_version": "3.5.0",
   "commands": [
     {
