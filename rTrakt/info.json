@@ -2,7 +2,7 @@
   "name": "rTrakt",
   "version": "1.0.0",
   "description": "A Discord bot cog for interacting with the Trakt API",
-  "author": "Subestro",
+  "author": ["Subestro"],
   "dependencies": {
     "discord.py": ">=1.7.3",
     "Red-DiscordBot": ">=3.5.0",
