@@ -1,22 +1,28 @@
 {
   "name": "rTrakt",
+  "author": ["Subestro"],
   "version": "1.0.0",
   "description": "A Red Bot cog for sending Trakt scrobbling notifications",
-  "author": ["Subestro"],
+  "min_bot_version": "3.4.0",
   "tags": ["trakt", "scrobbling", "notifications"],
-  "commands": [
-    {
+  "hidden": false,
+  "commands": {
+    "trakt": {
+      "name": "trakt",
+      "description": "Check and send Trakt scrobbling notifications"
+    },
+    "set_trakt_secrets": {
       "name": "set_trakt_secrets",
       "description": "Set Trakt API secrets",
       "usage": "<client_id> <client_secret>"
+    },
+    "set_channel_id": {
+      "name": "set_channel_id",
+      "description": "Set the channel ID for Trakt scrobbling notifications",
+      "usage": "<channel_id>"
     }
-  ],
-  "config": {
-    "client_id": "",
-    "client_secret": "",
-    "channel_id": null,
-    "access_token": "",
-    "refresh_token": ""
   },
-  "required_cogs": []
+  "required_cogs": {},
+  "permissions": [],
+  "requirements": []
 }
