@@ -84,19 +84,19 @@ class rTrakt(commands.Cog):
                 "grant_type": "authorization_code",
             }
             session = await self.get_session()
-            response = await session.post(TRAKT_AUTH_URL, headers=headers, json=data)
-            auth_data = await response.json()
+            response = await session.post(TRAKT_AUTH_URL, headers=headers, data=data)
+            auth_data = await response.text()
 
             if response.status == 200:
-                access_token = auth_data.get("access_token")
-                refresh_token = auth_data.get("refresh_token")
+                access_token = auth_data.split("&")[0].split("=")[1]
+                refresh_token = auth_data.split("&")[1].split("=")[1]
 
                 await self.config.access_token.set(access_token)
                 await self.config.refresh_token.set(refresh_token)
 
                 await ctx.send("Trakt authorization successful. You can now start monitoring Trakt activity.")
             else:
-                error_message = f"An error occurred during Trakt authorization: {auth_data.get('error_description', 'Unknown error')}"
+                error_message = f"An error occurred during Trakt authorization: {auth_data}"
                 await ctx.send(error_message)
 
 def setup(bot):
