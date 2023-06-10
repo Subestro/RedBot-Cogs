@@ -9,7 +9,8 @@
   "commands": {
     "trakt": {
       "name": "trakt",
-      "description": "Check and send Trakt scrobbling notifications"
+      "description": "Check and send Trakt scrobbling notifications",
+      "usage": ""
     },
     "set_trakt_secrets": {
       "name": "set_trakt_secrets",
