@@ -1,24 +1,39 @@
 {
   "name": "rTrakt",
-  "author": ["Subestro"],
   "version": "1.0.0",
-  "description": "A Red Bot cog for sending Trakt scrobbling notifications",
-  "min_bot_version": "3.4.0",
-  "tags": ["trakt", "scrobbling", "notifications"],
-  "hidden": false,
-  "commands": {
-    "trakt": {
-      "name": "trakt",
-      "description": "Check and send Trakt scrobbling notifications",
-      "usage": ""
-    },
-    "set_trakt_secrets": {
-      "name": "set_trakt_secrets",
-      "description": "Set Trakt API secrets",
-      "usage": "<client_id> <client_secret>"
-    }
+  "description": "A Discord bot cog for interacting with the Trakt API",
+  "author": "Subestro",
+  "dependencies": {
+    "discord.py": ">=1.7.3",
+    "Red-DiscordBot": ">=3.5.0",
+    "aiohttp": ">=3.7.4"
   },
-  "required_cogs": {},
-  "permissions": [],
-  "requirements": []
+  "required_cogs": [],
+  "min_bot_version": "3.5.0",
+  "commands": [
+    {
+      "name": "set_trakt_secrets",
+      "aliases": [],
+      "description": "Sets the Trakt client ID and client secret",
+      "usage": "set_trakt_secrets <client_id> <client_secret>"
+    },
+    {
+      "name": "set_trakt_channel",
+      "aliases": [],
+      "description": "Sets the Trakt channel for sending error messages",
+      "usage": "set_trakt_channel <channel_mention>"
+    },
+    {
+      "name": "authorize_trakt",
+      "aliases": [],
+      "description": "Authorizes the bot to access the Trakt API",
+      "usage": "authorize_trakt"
+    },
+    {
+      "name": "set_trakt_code",
+      "aliases": [],
+      "description": "Sets the Trakt authorization code",
+      "usage": "set_trakt_code <code>"
+    }
+  ]
 }
