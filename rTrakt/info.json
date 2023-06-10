@@ -1,22 +1,13 @@
 {
-  "name": "rTrakt",
-  "author": "Subestro",
-  "short": "A Red Bot cog for Trakt integration",
-  "commands": [
-    {
-      "name": "setchannel",
-      "short": "Set the channel for Trakt messages",
-      "usage": "[channel]"
-    },
-    {
-      "name": "settraktcredentials",
-      "short": "Set the Trakt client ID and client secret",
-      "usage": "<client_id> <client_secret>"
-    },
-    {
-      "name": "settraktchannel",
-      "short": "Set the Trakt channel",
-      "usage": "<channel>"
-    }
-  ]
+    "name": "rTrakt",
+    "author": "Subestro",
+    "version": "1.0.0",
+    "description": "A Red Bot cog for sending Trakt scrobbling notifications",
+    "min_bot_version": "3.4.0",
+    "tags": ["trakt", "scrobbling", "notifications"],
+    "hidden": false,
+    "commands": [
+        {"name": "set_trakt_secrets", "description": "Set Trakt API secrets", "usage": "<client_id> <client_secret>"}
+    ]
 }
+
