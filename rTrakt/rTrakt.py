@@ -3,9 +3,11 @@ import requests
 from redbot.core import Config, commands
 import asyncio
 import aiohttp
+import webbrowser
 
 TRAKT_API_URL = "https://api.trakt.tv"
 TRAKT_AUTH_URL = "https://trakt.tv/oauth/token"
+TRAKT_AUTH_CODE_URL = "https://trakt.tv/oauth/authorize"
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
@@ -85,35 +87,68 @@ class rTrakt(commands.Cog):
     async def initialize_trakt(self):
         client_id = await self.config.client_id()
         client_secret = await self.config.client_secret()
-        headers = {
-            "Content-Type": "application/json",
-            "trakt-api-version": "2",
-        }
-        data = {
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "grant_type": "client_credentials",
-        }
 
-        try:
-            async with self.session.post(TRAKT_AUTH_URL, headers=headers, json=data) as response:
-                response.raise_for_status()
-                auth_data = await response.json()
-                access_token = auth_data.get("access_token")
-                refresh_token = auth_data.get("refresh_token")
-                expires_in = auth_data.get("expires_in")
-                expires_at = asyncio.get_event_loop().time() + expires_in
-
-                await self.config.access_token.set(access_token)
-                await self.config.refresh_token.set(refresh_token)
-                await self.config.expires_at.set(expires_at)
-
-        except Exception as e:
-            error_message = f"An error occurred while initializing Trakt: {e}"
+        if not client_id or not client_secret:
+            error_message = "Trakt client ID and client secret have not been set. Please use the set_trakt_secrets command to set them."
             channel_id = await self.config.channel_id()
             channel = self.bot.get_channel(channel_id)
             if channel:
                 await channel.send(error_message)
+            return
+
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+
+        auth_url = f"{TRAKT_AUTH_CODE_URL}?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
+        await self.config.redirect_uri.set(redirect_uri)
+        channel_id = await self.config.channel_id()
+        channel = self.bot.get_channel(channel_id)
+        if channel:
+            await channel.send(f"Please authorize the bot by visiting the following URL and entering the provided code:\n{auth_url}")
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author == self.bot.user:
+            # Ignore messages sent by the bot
+            return
+
+        redirect_uri = await self.config.redirect_uri()
+        if message.channel.type == discord.ChannelType.private and message.content.startswith(redirect_uri):
+            authorization_code = message.content.replace(redirect_uri, "").strip()
+
+            client_id = await self.config.client_id()
+            client_secret = await self.config.client_secret()
+
+            headers = {
+                "Content-Type": "application/json",
+                "trakt-api-version": "2",
+            }
+            data = {
+                "code": authorization_code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            }
+
+            try:
+                async with self.session.post(TRAKT_AUTH_URL, headers=headers, json=data) as response:
+                    response.raise_for_status()
+                    auth_data = await response.json()
+                    access_token = auth_data.get("access_token")
+                    refresh_token = auth_data.get("refresh_token")
+                    expires_in = auth_data.get("expires_in")
+                    expires_at = asyncio.get_event_loop().time() + expires_in
+
+                    await self.config.access_token.set(access_token)
+                    await self.config.refresh_token.set(refresh_token)
+                    await self.config.expires_at.set(expires_at)
+
+                    await message.channel.send("Trakt authorization successful. You can now close this conversation.")
+                    await self.initialize_trakt()
+
+            except Exception as e:
+                error_message = f"An error occurred during Trakt authorization: {e}"
+                await message.channel.send(error_message)
 
     @commands.command()
     @commands.is_owner()
