@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from redbot.core import Config
+from redbot.core import commands, checks, Config
 import trakt
 
 
@@ -18,6 +18,7 @@ class rTrakt(commands.Cog):
         trakt.Trakt.configuration.defaults.client(
             id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
             secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5',
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
         )
         activity = discord.Activity(name="Initializing...", type=discord.ActivityType.watching)
         await self.update_presence(activity)
@@ -29,6 +30,7 @@ class rTrakt(commands.Cog):
         trakt.Trakt.configuration.defaults.client(
             id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
             secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5',
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
         )
         trakt.Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
         trakt.Trakt.configuration.defaults.http = trakt.Trakt.HTTPClient(headers={'trakt-api-key': api_key})
@@ -41,6 +43,7 @@ class rTrakt(commands.Cog):
             print(f"Go to {auth.verification_url} and enter code: {auth.user_code}")
             await ctx.send(f"Go to {auth.verification_url} and enter the code provided in console.")
             await auth.poll()
+            trakt.Trakt['sync'].watched_movies()  # Example Trakt API call to get the currently watched movies
             items = await trakt.Trakt['sync'].watched_movies()
             if items:
                 watched_movie = items[0]['movie']['title']
@@ -54,4 +57,5 @@ class rTrakt(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    cog = rTrakt(bot)
+    bot.add_cog(cog)
