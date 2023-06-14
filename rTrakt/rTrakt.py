@@ -1,76 +1,38 @@
 import discord
-from redbot.core import commands, Config, checks
+from discord.ext import commands
 from trakt import Trakt
 
-class rTrakt(commands.Cog):
+class TraktCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Use a unique identifier for your cog
+        self.client_id = 'YOUR_TRAKT_CLIENT_ID'
+        self.client_secret = 'YOUR_TRAKT_CLIENT_SECRET'
 
-        # Set the default values for the config options
-        self.config.register_global(
-            client_id=None,
-            client_secret=None,
-            channel_id=None
-        )
-
-    @commands.command()
-    async def settraktchannel(self, ctx, channel: discord.TextChannel):
-        await self.config.channel_id.set(channel.id)
-        await ctx.send(f"Trakt messages will be sent to {channel.mention}.")
-
-    @commands.command()
-    async def settraktcredentials(self, ctx, client_id, client_secret):
-        await self.config.client_id.set(client_id)
-        await self.config.client_secret.set(client_secret)
-        await ctx.send("Trakt credentials have been set.")
-
-    @commands.command()
-    async def trakt(self, ctx):
-        client_id = await self.config.client_id()
-        client_secret = await self.config.client_secret()
-        channel_id = await self.config.channel_id()
-
-        if client_id is None or client_secret is None:
-            await ctx.send("Please configure the Trakt API credentials first.")
-            return
-
-        if channel_id is None:
-            await ctx.send("Please set the Trakt channel first using the settraktchannel command.")
-            return
-
+    def authenticate(self):
         Trakt.configuration.defaults.client(
-            id=client_id,
-            secret=client_secret,
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+            id=self.client_id,
+            secret=self.client_secret
         )
 
-        auth_url = Trakt['oauth'].authorize_url(display='page')
-        await ctx.send(f"Please visit the following URL to authorize the Trakt API: {auth_url}")
+    @commands.command()
+    async def search_movie(self, ctx, movie_title):
+        self.authenticate()
+        results = Trakt['search'].movie(query=movie_title)
+        if results:
+            movie = results[0]
+            await ctx.send(f"Title: {movie.title}\nYear: {movie.year}")
+        else:
+            await ctx.send('No movie found.')
 
-        def check_authorization_message(msg):
-            return msg.author == ctx.author and msg.channel == ctx.channel
-
-        try:
-            auth_message = await self.bot.wait_for('message', check=check_authorization_message, timeout=120)
-        except asyncio.TimeoutError:
-            await ctx.send("Authorization timeout.")
-            return
-
-        auth_code = auth_message.content.strip()
-
-        try:
-            Trakt['oauth'].token(auth_code)
-        except Exception as e:
-            await ctx.send(f"Authorization failed. Error: {str(e)}")
-            return
-
-        movie = Trakt['search'].movie('The Matrix')[0]
-        await ctx.send(f"Watching {movie.title} on {movie.year}.")
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print("rTrakt cog is ready.")
+    @commands.command()
+    async def search_show(self, ctx, show_title):
+        self.authenticate()
+        results = Trakt['search'].show(query=show_title)
+        if results:
+            show = results[0]
+            await ctx.send(f"Title: {show.title}\nYear: {show.year}")
+        else:
+            await ctx.send('No show found.')
 
 def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    bot.add_cog(TraktCog(bot))
