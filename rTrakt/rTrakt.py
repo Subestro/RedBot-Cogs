@@ -1,6 +1,4 @@
 from redbot.core import commands, Config
-import discord
-import requests
 from urllib.parse import urlencode
 
 class rTrakt(commands.Cog):
