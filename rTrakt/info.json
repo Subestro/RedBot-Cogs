@@ -2,7 +2,7 @@
   "name": "rTrakt",
   "description": "A Red bot cog for interacting with the Trakt API.",
   "version": "1.0",
-  "author": "Subestro",
+  "author": ["Subestro"],
   "commands": [
     {
       "name": "search_movie",
