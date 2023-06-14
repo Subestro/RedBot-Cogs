@@ -40,9 +40,9 @@ class rTrakt(commands.Cog):
         await ctx.send("Trakt client secret has been set.")
 
     @commands.command()
-    async def search_movie(self, ctx, movie_title):
+    async def search_movie(self, ctx, *, movie_title):
         await self.initialize()
-        results = Trakt['search'].query('movies', query=movie_title)
+        results = Trakt['search'].query('movies', movie_title)
         if results:
             movie = results[0]
             await ctx.send(f"Title: {movie.title}\nYear: {movie.year}")
@@ -50,9 +50,9 @@ class rTrakt(commands.Cog):
             await ctx.send('No movie found.')
 
     @commands.command()
-    async def search_show(self, ctx, show_title):
+    async def search_show(self, ctx, *, show_title):
         await self.initialize()
-        results = Trakt['search'].query('shows', query=show_title)
+        results = Trakt['search'].query('shows', show_title)
         if results:
             show = results[0]
             await ctx.send(f"Title: {show.title}\nYear: {show.year}")
