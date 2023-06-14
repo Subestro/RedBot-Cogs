@@ -42,7 +42,6 @@ class rTrakt(commands.Cog):
             print(f"Go to {auth.verification_url} and enter code: {auth.user_code}")
             await ctx.send(f"Go to {auth.verification_url} and enter the code provided in console.")
             await auth.poll()
-            Trakt['sync'].watched_movies()  # Example Trakt API call to get the currently watched movies
             items = await Trakt['sync'].watched_movies()
             if items:
                 watched_movie = items[0]['movie']['title']
