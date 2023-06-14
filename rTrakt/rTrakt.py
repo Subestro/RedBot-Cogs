@@ -27,8 +27,8 @@ class rTrakt(commands.Cog):
     async def set_watching(self, ctx):
         api_key = await self.config.api_key()
         Trakt.configuration.defaults.client(
-            id='your_client_id',
-            secret='your_client_secret',
+            id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
+            secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5',
             redirect_uri='urn:ietf:wg:oauth:2.0:oob',
         )
         Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
