@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
-from redbot.core import commands, checks, Config
+from redbot.core import commands, Config
 import trakt
-
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
@@ -43,7 +42,6 @@ class rTrakt(commands.Cog):
             print(f"Go to {auth.verification_url} and enter code: {auth.user_code}")
             await ctx.send(f"Go to {auth.verification_url} and enter the code provided in console.")
             await auth.poll()
-            trakt.Trakt['sync'].watched_movies()  # Example Trakt API call to get the currently watched movies
             items = await trakt.Trakt['sync'].watched_movies()
             if items:
                 watched_movie = items[0]['movie']['title']
@@ -55,7 +53,5 @@ class rTrakt(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
 
-
 def setup(bot):
-    cog = rTrakt(bot)
-    bot.add_cog(cog)
+    bot.add_cog(rTrakt(bot))
