@@ -1,42 +1,58 @@
 import discord
 from discord.ext import commands
+from redbot.core import commands, checks, Config
 from trakt import Trakt
-from redbot.core import Config
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234569999)
-        default_global = {
-            "client_id": None,
-            "client_secret": None
-        }
-        self.config.register_global(**default_global)
+        self.config = Config.get_conf(self, identifier=1234567991)  # Use a unique identifier
+        self.config.register_global(api_key=None)
 
-    @commands.command()
-    async def trakt(self, ctx):
-        client_id = await self.config.client_id()
-        client_secret = await self.config.client_secret()
-        if not client_id or not client_secret:
-            await ctx.send("Please set the Trakt API client ID and secret using the `settrakt` command.")
-            return
+    async def update_presence(self, activity):
+        await self.bot.change_presence(activity=activity)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
         Trakt.configuration.defaults.client(
-            id=client_id,
-            secret=client_secret,
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+            id='your_client_id',
+            secret='your_client_secret',
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
         )
-        Trakt.configuration.defaults.oauth.from_response(
-            input('Enter the pin given at %s : ' % Trakt['oauth'].authorize_url())
-        )
-        movie = Trakt['search'].movie('The Matrix')[0]
-        await ctx.send(f"Watching {movie.title} on {movie.year}.")
+        activity = discord.Activity(name="Initializing...", type=discord.ActivityType.watching)
+        await self.update_presence(activity)
 
     @commands.command()
-    async def settrakt(self, ctx, client_id: str, client_secret: str):
-        await self.config.client_id.set(client_id)
-        await self.config.client_secret.set(client_secret)
-        await ctx.send("Trakt API client ID and secret set.")
+    @commands.guild_only()
+    async def set_watching(self, ctx):
+        api_key = await self.config.api_key()
+        Trakt.configuration.defaults.client(
+            id='your_client_id',
+            secret='your_client_secret',
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
+        )
+        Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
+        Trakt.configuration.defaults.http = Trakt.HTTPClient(headers={'trakt-api-key': api_key})
+
+        activity = discord.Activity(name="Loading...", type=discord.ActivityType.watching)
+        await self.update_presence(activity)
+
+        try:
+            auth = Trakt['oauth'].device_code(device='default')  # Use 'default' as the device name
+            print(f"Go to {auth.verification_url} and enter code: {auth.user_code}")
+            await ctx.send(f"Go to {auth.verification_url} and enter the code provided in console.")
+            await auth.poll()
+            Trakt['sync'].watched_movies()  # Example Trakt API call to get the currently watched movies
+            items = await Trakt['sync'].watched_movies()
+            if items:
+                watched_movie = items[0]['movie']['title']
+                activity = discord.Activity(name=watched_movie, type=discord.ActivityType.watching)
+                await self.update_presence(activity)
+                await ctx.send(f"Now watching: {watched_movie}")
+            else:
+                await ctx.send("No movies being watched currently.")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {str(e)}")
 
 def setup(bot):
-    cog = rTrakt(bot)
-    bot.add_cog(cog)
+    bot.add_cog(rTrakt(bot))
