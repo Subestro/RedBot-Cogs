@@ -1,24 +1,18 @@
 {
   "name": "rTrakt",
-  "author": ["Subestro"],
-  "version": "1.0.0",
-  "description": "A Red bot cog for Trakt integration",
-  "min_bot_version": "3.0.0",
-  "tags": ["trakt", "integration", "watchlist"],
+  "description": "A Red bot cog for interacting with the Trakt API.",
+  "version": "1.0",
+  "author": "Subestro",
   "commands": [
     {
-      "name": "traktlogin",
-      "description": "Initiates the Trakt OAuth flow and provides the authorization link",
-      "usage": "[p]traktlogin",
-      "aliases": [],
-      "category": "Trakt"
+      "name": "search_movie",
+      "description": "Search for a movie on Trakt.",
+      "usage": "!search_movie <movie_title>"
     },
     {
-      "name": "settrakttoken",
-      "description": "Sets the Trakt access token for authenticated requests",
-      "usage": "[p]settrakttoken <access_token>",
-      "aliases": [],
-      "category": "Trakt"
+      "name": "search_show",
+      "description": "Search for a show on Trakt.",
+      "usage": "!search_show <show_title>"
     }
   ]
 }
