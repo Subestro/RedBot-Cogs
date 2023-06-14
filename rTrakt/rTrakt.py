@@ -1,6 +1,6 @@
 import discord
 from redbot.core import commands, Config, checks
-from trakt import Trakt, TraktDeviceAuth
+from trakt import Trakt
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
@@ -20,6 +20,12 @@ class rTrakt(commands.Cog):
         await ctx.send(f"Trakt messages will be sent to {channel.mention}.")
 
     @commands.command()
+    async def settraktcredentials(self, ctx, client_id, client_secret):
+        await self.config.client_id.set(client_id)
+        await self.config.client_secret.set(client_secret)
+        await ctx.send("Trakt credentials have been set.")
+
+    @commands.command()
     async def trakt(self, ctx):
         client_id = await self.config.client_id()
         client_secret = await self.config.client_secret()
@@ -33,9 +39,13 @@ class rTrakt(commands.Cog):
             await ctx.send("Please set the Trakt channel first using the settraktchannel command.")
             return
 
-        Trakt.configure(client_id=client_id, client_secret=client_secret)
-        Trakt.authorization = TraktDeviceAuth()
-        auth_url = Trakt.authorization_url()
+        Trakt.configuration.defaults.client(
+            id=client_id,
+            secret=client_secret,
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+        )
+
+        auth_url = Trakt['oauth'].authorize_url(display='page')
         await ctx.send(f"Please visit the following URL to authorize the Trakt API: {auth_url}")
 
         def check_authorization_message(msg):
@@ -50,13 +60,13 @@ class rTrakt(commands.Cog):
         auth_code = auth_message.content.strip()
 
         try:
-            Trakt.authorization = TraktDeviceAuth()
-            Trakt.authorization = Trakt.authorization_from_code(auth_code)
-        except TraktException as e:
+            Trakt['oauth'].token(auth_code)
+        except Exception as e:
             await ctx.send(f"Authorization failed. Error: {str(e)}")
             return
 
-        await ctx.send("Authorization successful.")
+        movie = Trakt['search'].movie('The Matrix')[0]
+        await ctx.send(f"Watching {movie.title} on {movie.year}.")
 
     @commands.Cog.listener()
     async def on_ready(self):
