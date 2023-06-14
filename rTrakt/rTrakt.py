@@ -38,4 +38,5 @@ class rTrakt(commands.Cog):
         await ctx.send("Trakt API client ID and secret set.")
 
 def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    cog = rTrakt(bot)
+    bot.add_cog(cog)
