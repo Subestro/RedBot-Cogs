@@ -6,7 +6,7 @@ from redbot.core import Config
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)
+        self.config = Config.get_conf(self, identifier=1234569999)
         default_global = {
             "client_id": None,
             "client_secret": None
