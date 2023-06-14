@@ -4,7 +4,7 @@ from trakt import Trakt
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier of your choice
+        self.config = Config.get_conf(self, identifier=2224567891)  # Replace with a unique identifier of your choice
 
         default_global = {
             "trakt_client_id": "",
