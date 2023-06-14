@@ -14,7 +14,7 @@ class rTrakt(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        Trakt.configuration.defaults.client(
+        trakt.Trakt.configuration.defaults.client(
             id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
             secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5',
             redirect_uri='urn:ietf:wg:oauth:2.0:oob',
@@ -26,23 +26,24 @@ class rTrakt(commands.Cog):
     @commands.guild_only()
     async def set_watching(self, ctx):
         api_key = await self.config.api_key()
-        Trakt.configuration.defaults.client(
+        trakt.Trakt.configuration.defaults.client(
             id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
             secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5',
             redirect_uri='urn:ietf:wg:oauth:2.0:oob',
         )
-        Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
-        Trakt.configuration.defaults.http = Trakt.HTTPClient(headers={'trakt-api-key': api_key})
+        trakt.Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
+        trakt.Trakt.configuration.defaults.http = trakt.Trakt.HTTPClient(headers={'trakt-api-key': api_key})
 
         activity = discord.Activity(name="Loading...", type=discord.ActivityType.watching)
         await self.update_presence(activity)
 
         try:
-            auth = Trakt['oauth'].device_code(device='default')  # Use 'default' as the device name
+            auth = trakt.Trakt['oauth'].device_code(device='default')  # Use 'default' as the device name
             print(f"Go to {auth.verification_url} and enter code: {auth.user_code}")
             await ctx.send(f"Go to {auth.verification_url} and enter the code provided in console.")
             await auth.poll()
-            items = await Trakt['sync'].watched_movies()
+            trakt.Trakt['sync'].watched_movies()  # Example Trakt API call to get the currently watched movies
+            items = await trakt.Trakt['sync'].watched_movies()
             if items:
                 watched_movie = items[0]['movie']['title']
                 activity = discord.Activity(name=watched_movie, type=discord.ActivityType.watching)
