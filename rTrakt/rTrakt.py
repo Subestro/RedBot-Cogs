@@ -28,13 +28,13 @@ class rTrakt(commands.Cog):
         pass
 
     @trakt.command()
-    async def traktid(self, ctx, client_id):
+    async def id(self, ctx, client_id):
         """Set the Trakt client ID"""
         await self.config.trakt_client_id.set(client_id)
         await ctx.send("Trakt client ID has been set.")
 
     @trakt.command()
-    async def traktst(self, ctx, client_secret):
+    async def st(self, ctx, client_secret):
         """Set the Trakt client secret"""
         await self.config.trakt_client_secret.set(client_secret)
         await ctx.send("Trakt client secret has been set.")
