@@ -1,7 +1,7 @@
 from redbot.core import commands, Config
 from trakt import Trakt
 
-class TraktCog(commands.Cog):
+class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier of your choice
@@ -43,4 +43,4 @@ class TraktCog(commands.Cog):
             await ctx.send('No show found.')
 
 def setup(bot):
-    bot.add_cog(TraktCog(bot))
+    bot.add_cog(rTrakt(bot))
