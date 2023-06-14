@@ -1,5 +1,7 @@
 from .rTrakt import rTrakt
 
-def setup(bot):
+async def setup(bot):
     cog = rTrakt(bot)
+    await cog.initialize()  # Add an initialize method if necessary
     bot.add_cog(cog)
+
