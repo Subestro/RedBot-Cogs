@@ -24,24 +24,25 @@ class rTrakt(commands.Cog):
 
     @commands.group()
     async def trakt(self, ctx):
-        """Manage Trakt API credentials"""
+        """Trakt API settings"""
+        pass
 
     @trakt.command()
-    async def set_client_id(self, ctx, client_id):
+    async def traktid(self, ctx, client_id):
         """Set the Trakt client ID"""
         await self.config.trakt_client_id.set(client_id)
-        await ctx.send(f"Trakt client ID set to: {client_id}")
+        await ctx.send("Trakt client ID has been set.")
 
     @trakt.command()
-    async def set_client_secret(self, ctx, client_secret):
+    async def traktst(self, ctx, client_secret):
         """Set the Trakt client secret"""
         await self.config.trakt_client_secret.set(client_secret)
-        await ctx.send(f"Trakt client secret set")
+        await ctx.send("Trakt client secret has been set.")
 
     @commands.command()
     async def search_movie(self, ctx, movie_title):
         await self.initialize()
-        results = Trakt['search'].query('movies', movie_title)
+        results = Trakt['search'].query('movies', query=movie_title)
         if results:
             movie = results[0]
             await ctx.send(f"Title: {movie.title}\nYear: {movie.year}")
@@ -51,7 +52,7 @@ class rTrakt(commands.Cog):
     @commands.command()
     async def search_show(self, ctx, show_title):
         await self.initialize()
-        results = Trakt['search'].query('shows', show_title)
+        results = Trakt['search'].query('shows', query=show_title)
         if results:
             show = results[0]
             await ctx.send(f"Title: {show.title}\nYear: {show.year}")
