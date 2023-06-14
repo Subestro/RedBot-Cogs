@@ -1,26 +1,33 @@
 import discord
-from discord.ext import commands
 from redbot.core import commands, Config
+from redbot.core.utils.predicates import MessagePredicate
+
 import trakt
 
+
 class rTrakt(commands.Cog):
+    """Cog for interacting with Trakt API."""
+
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567991)  # Use a unique identifier
-        self.config.register_global(api_key=None)
+        self.config = Config.get_conf(self, identifier=6700039)
+        default_global = {"api_key": ""}
+        self.config.register_global(**default_global)
 
-    async def update_presence(self, activity):
-        await self.bot.change_presence(activity=activity)
-
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def initialize(self):
+        api_key = await self.config.api_key()
         trakt.Trakt.configuration.defaults.client(
             id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
-            secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5',
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
+            secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5'
         )
-        activity = discord.Activity(name="Initializing...", type=discord.ActivityType.watching)
-        await self.update_presence(activity)
+        trakt.Trakt.configuration.defaults.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+        trakt.Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
+        trakt.Trakt.configuration.defaults.http = trakt.Trakt.HTTPClient(headers={'trakt-api-key': api_key})
+
+    async def update_presence(self, activity):
+        game = discord.Game()
+        game.activity = activity
+        await self.bot.change_presence(activity=game)
 
     @commands.command()
     @commands.guild_only()
@@ -28,9 +35,9 @@ class rTrakt(commands.Cog):
         api_key = await self.config.api_key()
         trakt.Trakt.configuration.defaults.client(
             id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
-            secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5',
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob',
+            secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5'
         )
+        trakt.Trakt.configuration.defaults.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
         trakt.Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
         trakt.Trakt.configuration.defaults.http = trakt.Trakt.HTTPClient(headers={'trakt-api-key': api_key})
 
@@ -53,5 +60,7 @@ class rTrakt(commands.Cog):
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
 
+
 def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    cog = rTrakt(bot)
+    bot.add_cog(cog)
