@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from redbot.core import commands, checks, Config
-from trakt import Trakt
+import trakt
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
