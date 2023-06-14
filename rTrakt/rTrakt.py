@@ -1,6 +1,7 @@
 from redbot.core import commands, Config
 from trakt import Trakt
 
+
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -25,7 +26,7 @@ class rTrakt(commands.Cog):
     @commands.command()
     async def search_movie(self, ctx, movie_title):
         await self.initialize()
-        results = Trakt['search'].movie(query=movie_title)
+        results = Trakt['search'].query('movies', query=movie_title)
         if results:
             movie = results[0]
             await ctx.send(f"Title: {movie.title}\nYear: {movie.year}")
@@ -35,12 +36,13 @@ class rTrakt(commands.Cog):
     @commands.command()
     async def search_show(self, ctx, show_title):
         await self.initialize()
-        results = Trakt['search'].show(query=show_title)
+        results = Trakt['search'].query('shows', query=show_title)
         if results:
             show = results[0]
             await ctx.send(f"Title: {show.title}\nYear: {show.year}")
         else:
             await ctx.send('No show found.')
+
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
