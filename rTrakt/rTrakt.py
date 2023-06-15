@@ -65,6 +65,26 @@ class rTrakt(commands.Cog):
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
         await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
+      
+    @commands.command()
+    @checks.is_owner()
+    async def settrakttoken(self, ctx, authorization_code: str):
+        trakt_config = await self.config.all()
+        client_id = trakt_config["client_id"]
+        client_secret = trakt_config["client_secret"]
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+
+        try:
+            trakt.core.AUTH_METHOD = trakt.OAuthAuthenticator(client_id, client_secret)
+            response = await trakt.core.AUTH_METHOD.get_access_token(authorization_code, redirect_uri)
+            access_token = response.get("access_token")
+            if access_token:
+                await self.config.access_token.set(access_token)
+                await ctx.send("Trakt access token has been set.")
+            else:
+                await ctx.send("Failed to exchange authorization code for access token.")
+        except Exception as e:
+            await ctx.send(f"Failed to exchange authorization code for access token: {e}")
 
     @commands.command()
     @checks.is_owner()
