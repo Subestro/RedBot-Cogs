@@ -43,8 +43,8 @@ class rTrakt(commands.Cog):
     async def authorize(self, ctx: commands.Context):
         """Authorize the bot with Trakt."""
         try:
-            trakt = await self.get_trakt_client()
-            auth_url = trakt.core.oauth.OAuth.authorization_url('urn:ietf:wg:oauth:2.0:oob')
+            trakt_client = await self.get_trakt_client()
+            auth_url = trakt_client['oauth'].authorization_url('urn:ietf:wg:oauth:2.0:oob')
             await ctx.send(f"Please authorize the bot using the following link:\n\n{auth_url}")
         except Exception as e:
             await ctx.send(f"An error occurred while authorizing the bot with Trakt: {e}")
@@ -53,8 +53,8 @@ class rTrakt(commands.Cog):
     async def settraktcode(self, ctx: commands.Context, code: str):
         """Set the Trakt authorization code."""
         try:
-            trakt = await self.get_trakt_client()
-            token = trakt.core.oauth.OAuth.token_exchange(code, 'urn:ietf:wg:oauth:2.0:oob')
+            trakt_client = await self.get_trakt_client()
+            token = trakt_client['oauth'].token_exchange(code, 'urn:ietf:wg:oauth:2.0:oob')
             await self.config.access_token.set(token["access_token"])
             await self.config.refresh_token.set(token["refresh_token"])
             await ctx.send("Trakt authorization code set successfully.")
@@ -65,10 +65,10 @@ class rTrakt(commands.Cog):
     async def scrobblestatus(self, ctx: commands.Context):
         """Get the current scrobble status."""
         try:
-            trakt = await self.get_trakt_client()
+            trakt_client = await self.get_trakt_client()
             access_token = await self.config.access_token()
-            trakt.core.oauth.OAuth.access_token(access_token)
-            scrobble = trakt.users.User.get_activities('me', limit=1)
+            trakt_client['oauth'].access_token(access_token)
+            scrobble = trakt_client['users'].User.get_activities('me', limit=1)
             
             if scrobble:
                 scrobble = scrobble[0]
