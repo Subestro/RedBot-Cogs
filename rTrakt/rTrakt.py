@@ -24,7 +24,7 @@ class rTrakt(commands.Cog):
         while not self.bot.is_closed():
             activity = await self.get_current_watching_activity()
             await self.update_bot_activity(activity)
-            await asyncio.sleep(300)  # Check every 5 minutes
+            await asyncio.sleep(5)  # Check every 5s
 
     async def get_current_watching_activity(self):
         try:
@@ -44,7 +44,7 @@ class rTrakt(commands.Cog):
                     return f"Watching {watched[0].title}"
         except Exception as e:
             print(f"Error retrieving Trakt data: {e}")
-        return "Playing Nothing"
+        return "Nothing"
 
     async def update_bot_activity(self, activity):
         await self.config.activity.set(activity)
