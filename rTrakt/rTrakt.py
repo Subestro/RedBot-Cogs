@@ -88,4 +88,16 @@ class rTrakt(commands.Cog):
         await ctx.send(f"Activity set to: {activity}")
 
     async def get_authorization_url(self):
-        trakt
+        trakt_config = await self.config.all()
+        client_id = trakt_config["client_id"]
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+
+        Trakt.configuration.defaults.client(
+            id=client_id
+        )
+        auth = Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
+
+        return auth
+
+def setup(bot):
+    bot.add_cog(rTrakt(bot))
