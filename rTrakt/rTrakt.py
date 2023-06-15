@@ -9,6 +9,7 @@ class rTrakt(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = bot.get_cog("Config")
+        self.trakt = Trakt()
 
     async def get_current_watching_activity(self):
         try:
@@ -18,17 +19,15 @@ class rTrakt(commands.Cog):
             access_token = trakt_config.get("access_token")
 
             if client_id and client_secret and access_token:
-                Trakt.configuration.defaults.client(
+                self.trakt.configuration.defaults.client(
                     id=client_id,
                     secret=client_secret
                 )
-                Trakt.configuration.defaults.oauth.from_response_code(redirect_uri)
-                Trakt.configuration.defaults.oauth.token = access_token
-                Trakt.configuration.defaults.oauth.refresh()
+                self.trakt.configuration.defaults.oauth.from_response_code(redirect_uri)
+                self.trakt.configuration.defaults.oauth.token = access_token
+                self.trakt.configuration.defaults.oauth.refresh()
 
-                trakt = Trakt()
-                trakt.sync.collection.get()
-                watched = trakt['sync/playback'].get()
+                watched = self.trakt.sync.playback.get()
                 if watched and watched.media_type == "episode":
                     return f"Watching {watched.show.title} - Season {watched.episode.season} Episode {watched.episode.number}"
                 elif watched and watched.media_type == "movie":
@@ -57,14 +56,14 @@ class rTrakt(commands.Cog):
             redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
 
             if client_id and client_secret:
-                Trakt.configuration.defaults.client(
+                self.trakt.configuration.defaults.client(
                     id=client_id,
                     secret=client_secret
                 )
-                Trakt.configuration.defaults.oauth.from_response_code(redirect_uri)
-                Trakt.configuration.defaults.oauth.token_exchange(code, redirect_uri)
+                self.trakt.configuration.defaults.oauth.from_response_code(redirect_uri)
+                self.trakt.configuration.defaults.oauth.token_exchange(code, redirect_uri)
 
-                access_token = Trakt.configuration.defaults.oauth.token
+                access_token = self.trakt.configuration.defaults.oauth.token
                 await self.config.access_token.set(access_token)
 
                 await ctx.send("Trakt authorization code set successfully.")
@@ -83,17 +82,4 @@ class rTrakt(commands.Cog):
             await ctx.send(f"An error occurred while retrieving Trakt scrobbler status: {e}")
 
     async def initialize(self):
-        trakt_config = await self.config.all()
-        client_id = trakt_config.get("client_id")
-        client_secret = trakt_config.get("client_secret")
-
-        if client_id and client_secret:
-            Trakt.configuration.defaults.client(
-                id=client_id,
-                secret=client_secret
-            )
-
-            access_token = trakt_config.get("access_token")
-            if access_token:
-                Trakt.configuration.defaults.oauth.token = access_token
-                Trakt.configuration.defaults.oauth.refresh()
+        pass
