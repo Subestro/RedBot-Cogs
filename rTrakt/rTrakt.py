@@ -9,7 +9,7 @@ import trakt
 class rTrakt(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567987, force_registration=True)
+        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
 
         # Set default configuration values
         default_guild_settings = {
@@ -90,8 +90,6 @@ class rTrakt(commands.Cog):
                     if channel:
                         await self.bot.change_presence(activity=discord.Activity(
                             type=discord.ActivityType.watching, name=currently_watching.title), guild=guild)
-
-                        await channel.send(f"{self.bot.user.display_name} is now watching: {currently_watching.title}")
 
     @commands.command()
     @commands.guild_only()
