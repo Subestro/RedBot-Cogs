@@ -6,7 +6,7 @@ from trakt import Trakt
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567111)  # Replace with a unique identifier
+        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
         self.config.register_global(
             client_id=None,
             client_secret=None,
@@ -58,7 +58,12 @@ class rTrakt(commands.Cog):
     async def settraktcreds(self, ctx, client_id: str, client_secret: str):
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
-        await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
+        await ctx.send(f"Please authorize the bot using the following link:\n\n{self.get_authorization_url()}")
+
+    def get_authorization_url(self):
+        client_id = self.config.client_id()
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+        return Trakt['oauth'].authorize_url(client_id, redirect_uri)
 
     @commands.command()
     @checks.is_owner()
@@ -72,24 +77,15 @@ class rTrakt(commands.Cog):
             id=client_id,
             secret=client_secret
         )
-        access_token = await Trakt['oauth'].token_exchange(code, redirect_uri)
+        access_token = await Trakt.oauth.token_exchange(code, redirect_uri)
         await self.config.access_token.set(access_token)
         await ctx.send("Trakt access token has been set.")
-
-    async def get_authorization_url(self):
-        trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-        return f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
 
     @commands.command()
     @checks.is_owner()
     async def setactivity(self, ctx, *, activity: str):
         await self.update_bot_activity(activity)
-        await ctx.send("Bot activity has been updated.")
+        await ctx.send(f"Activity set to: {activity}")
 
-    @commands.Cog.listener()
-    async def on_red_ready(self):
-        activity = await self.config.activity()
-        await self.update_bot_activity(activity)
-
+def setup(bot):
+    bot.add_cog(rTrakt(bot))
