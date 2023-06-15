@@ -55,37 +55,30 @@ class rTrakt(commands.Cog):
 
     @commands.command()
     @checks.is_owner()
-    async def settraktcreds(self, ctx, client_id: str, client_secret: str):
+    async def settraktcreds(self, ctx, client_id: str, client_secret: str, access_token: str):
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
-        await ctx.send(f"Please authorize the bot using the following link:\n\n{self.get_authorization_url()}")
-
-    def get_authorization_url(self):
-        client_id = self.config.client_id()
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-        return Trakt['oauth'].authorize_url(client_id, redirect_uri)
-
-    @commands.command()
-    @checks.is_owner()
-    async def settraktcode(self, ctx, code: str):
-        trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        client_secret = trakt_config["client_secret"]
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-
-        Trakt.configuration.defaults.client(
-            id=client_id,
-            secret=client_secret
-        )
-        access_token = await Trakt.oauth.token_exchange(code, redirect_uri)
         await self.config.access_token.set(access_token)
-        await ctx.send("Trakt access token has been set.")
+        await ctx.send("Trakt API credentials and access token have been set.")
+        await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
 
     @commands.command()
     @checks.is_owner()
     async def setactivity(self, ctx, *, activity: str):
         await self.update_bot_activity(activity)
         await ctx.send(f"Activity set to: {activity}")
+
+    async def get_authorization_url(self):
+        trakt_config = await self.config.all()
+        client_id = trakt_config["client_id"]
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+
+        Trakt.configuration.defaults.client(
+            id=client_id
+        )
+        auth = Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
+
+        return auth
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
