@@ -52,7 +52,7 @@ class rTrakt(commands.Cog):
         else:
             await self.bot.change_presence(activity=None)
 
-    def get_authorization_url(self):
+    async def get_authorization_url(self):
         trakt_config = await self.config.all()
         client_id = await trakt_config.client_id()
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
@@ -63,7 +63,7 @@ class rTrakt(commands.Cog):
     async def settraktcreds(self, ctx, client_id: str, client_secret: str):
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
-        await ctx.send(f"Please authorize the bot using the following link:\n\n{self.get_authorization_url()}")
+        await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
 
     @commands.command()
     @checks.is_owner()
