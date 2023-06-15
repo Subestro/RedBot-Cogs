@@ -1,66 +1,124 @@
 import discord
-from redbot.core import commands, Config
-from redbot.core.utils.predicates import MessagePredicate
+from discord.ext import commands
+from redbot.core import Config
+from redbot.core.bot import Red
 
+# Make sure you have the trakt module installed via pip
 import trakt
 
-
 class rTrakt(commands.Cog):
-    """Cog for interacting with Trakt API."""
-
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=6700039)
-        default_global = {"api_key": ""}
-        self.config.register_global(**default_global)
+        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
 
-    async def initialize(self):
-        api_key = await self.config.api_key()
-        trakt.Trakt.configuration.defaults.client(
-            id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
-            secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5'
-        )
-        trakt.Trakt.configuration.defaults.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-        trakt.Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
-        trakt.Trakt.configuration.defaults.http = trakt.Trakt.HTTPClient(headers={'trakt-api-key': api_key})
+        # Set default configuration values
+        default_guild_settings = {
+            "channel_id": None,
+            "trakt_access_token": None,
+            "trakt_refresh_token": None
+        }
+        self.config.register_guild(**default_guild_settings)
 
-    async def update_presence(self, activity):
-        game = discord.Game()
-        game.activity = activity
-        await self.bot.change_presence(activity=game)
+        # Start the task to update the currently watching activity
+        self.update_activity.start()
+
+    def cog_unload(self):
+        # Stop the task when the cog is unloaded
+        self.update_activity.cancel()
+
+    async def get_currently_watching(self, access_token):
+        # Retrieve the currently watching information from Trakt using the access token
+        trakt.init(access_token)
+        user = trakt.users.User('me')
+        watched_movies = user.watched_movies(pagination=True)
+        currently_watching = next(watched_movies)
+
+        return currently_watching
+
+    async def get_access_token(self, code):
+        # Exchange the authorization code for an access token
+        auth = trakt.TraktAuth()
+        access_token = await auth.exchange_code_for_access_token(code, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+
+        return access_token['access_token'], access_token['refresh_token']
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("rTrakt is ready.")
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        # Check if the member is the bot itself
+        if after.id != self.bot.user.id:
+            return
+
+        # Check if the activity type is "watching"
+        if after.activity and after.activity.type == discord.ActivityType.watching:
+            # Get the guild-specific Trakt access token
+            guild = after.guild
+            access_token = await self.config.guild(guild).trakt_access_token()
+
+            if access_token:
+                currently_watching = await self.get_currently_watching(access_token)
+
+                # Get the guild-specific channel to send the activity updates
+                channel_id = await self.config.guild(guild).channel_id()
+
+                if channel_id:
+                    channel = guild.get_channel(channel_id)
+                    if channel:
+                        await channel.send(f"{after.display_name} is now watching: {currently_watching.title}")
+
+    @tasks.loop(minutes=15)  # Adjust the interval as per your requirement
+    async def update_activity(self):
+        # Get the guilds the bot is in
+        guilds = self.bot.guilds
+
+        for guild in guilds:
+            # Get the guild-specific channel to send the activity updates
+            channel_id = await self.config.guild(guild).channel_id()
+
+            if channel_id:
+                channel = guild.get_channel(channel_id)
+
+                # Get the guild-specific Trakt access token
+                access_token = await self.config.guild(guild).trakt_access_token()
+
+                if access_token:
+                    currently_watching = await self.get_currently_watching(access_token)
+
+                    if channel:
+                        await self.bot.change_presence(activity=discord.Activity(
+                            type=discord.ActivityType.watching, name=currently_watching.title), guild=guild)
+
+                        await channel.send(f"{self.bot.user.display_name} is now watching: {currently_watching.title}")
 
     @commands.command()
     @commands.guild_only()
-    async def set_watching(self, ctx):
-        api_key = await self.config.api_key()
-        trakt.Trakt.configuration.defaults.client(
-            id='4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42',
-            secret='be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5'
-        )
-        trakt.Trakt.configuration.defaults.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-        trakt.Trakt.configuration.defaults.oauth.from_response(flow='device', refresh=True, store=True)
-        trakt.Trakt.configuration.defaults.http = trakt.Trakt.HTTPClient(headers={'trakt-api-key': api_key})
+    async def set_activity_channel(self, ctx, channel: discord.TextChannel):
+        # Set the guild-specific channel to receive the activity updates
+        await self.config.guild(ctx.guild).channel_id.set(channel.id)
+        await ctx.send(f"Activity updates will now be sent to {channel.mention}.")
 
-        activity = discord.Activity(name="Loading...", type=discord.ActivityType.watching)
-        await self.update_presence(activity)
+    @commands.command()
+    async def authenticate(self, ctx):
+        # Generate the Trakt OAuth authorization URL
+        auth = trakt.TraktAuth()
+        auth_url = auth.get_authorization_url(redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
-        try:
-            auth = trakt.Trakt['oauth'].device_code(device='default')  # Use 'default' as the device name
-            print(f"Go to {auth.verification_url} and enter code: {auth.user_code}")
-            await ctx.send(f"Go to {auth.verification_url} and enter the code provided in console.")
-            await auth.poll()
-            items = await trakt.Trakt['sync'].watched_movies()
-            if items:
-                watched_movie = items[0]['movie']['title']
-                activity = discord.Activity(name=watched_movie, type=discord.ActivityType.watching)
-                await self.update_presence(activity)
-                await ctx.send(f"Now watching: {watched_movie}")
-            else:
-                await ctx.send("No movies being watched currently.")
-        except Exception as e:
-            await ctx.send(f"An error occurred: {str(e)}")
+        await ctx.send(f"Visit the following URL to authorize the bot: {auth_url}")
 
+    @commands.command()
+    async def set_access_token(self, ctx, code):
+        # Exchange the authorization code for an access token
+        access_token, refresh_token = await self.get_access_token(code)
 
-def setup(bot):
+        # Store the access token and refresh token in the guild-specific config
+        await self.config.guild(ctx.guild).trakt_access_token.set(access_token)
+        await self.config.guild(ctx.guild).trakt_refresh_token.set(refresh_token)
+
+        await ctx.send("Access token and refresh token have been set.")
+
+def setup(bot: Red):
     cog = rTrakt(bot)
     bot.add_cog(cog)
