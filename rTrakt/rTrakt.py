@@ -1,12 +1,12 @@
 import discord
 import asyncio
 from redbot.core import commands, checks, Config
-import trakt
+from trakt import Trakt
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
+        self.config = Config.get_conf(self, identifier=1234567111)  # Replace with a unique identifier
         self.config.register_global(
             client_id=None,
             client_secret=None,
@@ -29,16 +29,17 @@ class rTrakt(commands.Cog):
     async def get_current_watching_activity(self):
         try:
             trakt_config = await self.config.all()
-            client_id = await trakt_config.client_id()
-            client_secret = await trakt_config.client_secret()
-            access_token = await trakt_config.access_token()
+            client_id = trakt_config["client_id"]
+            client_secret = trakt_config["client_secret"]
+            access_token = trakt_config["access_token"]
 
             if client_id and client_secret and access_token:
-                trakt.init(client_id=client_id, client_secret=client_secret, oauth=True)
-                trakt.set_default_client()
-                trakt.configuration.defaults.oauth.from_response_code(code=access_token)
-
-                watched = await trakt.users(username='me').watched()
+                Trakt.configuration.defaults.client(
+                    id=client_id,
+                    secret=client_secret
+                )
+                trakt = Trakt(access_token)
+                watched = await trakt['sync/watched'].movies()
                 if watched:
                     return f"Watching {watched[0].title}"
         except Exception as e:
@@ -52,45 +53,43 @@ class rTrakt(commands.Cog):
         else:
             await self.bot.change_presence(activity=None)
 
-    async def get_authorization_url(self):
-        trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-        return f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
-
-
     @commands.command()
     @checks.is_owner()
     async def settraktcreds(self, ctx, client_id: str, client_secret: str):
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
         await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
-      
+
     @commands.command()
     @checks.is_owner()
-    async def settrakttoken(self, ctx, authorization_code: str):
+    async def settraktcode(self, ctx, code: str):
         trakt_config = await self.config.all()
         client_id = trakt_config["client_id"]
         client_secret = trakt_config["client_secret"]
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
 
-        try:
-            trakt.core.AUTH_METHOD = trakt.OAuthAuthenticator(client_id, client_secret)
-            response = await trakt.core.AUTH_METHOD.get_access_token(authorization_code, redirect_uri)
-            access_token = response.get("access_token")
-            if access_token:
-                await self.config.access_token.set(access_token)
-                await ctx.send("Trakt access token has been set.")
-            else:
-                await ctx.send("Failed to exchange authorization code for access token.")
-        except Exception as e:
-            await ctx.send(f"Failed to exchange authorization code for access token: {e}")
+        Trakt.configuration.defaults.client(
+            id=client_id,
+            secret=client_secret
+        )
+        access_token = await Trakt['oauth'].token_exchange(code, redirect_uri)
+        await self.config.access_token.set(access_token)
+        await ctx.send("Trakt access token has been set.")
+
+    async def get_authorization_url(self):
+        trakt_config = await self.config.all()
+        client_id = trakt_config["client_id"]
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+        return f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
 
     @commands.command()
     @checks.is_owner()
     async def setactivity(self, ctx, *, activity: str):
         await self.update_bot_activity(activity)
-        await ctx.send(f"Activity set to: {activity}")
+        await ctx.send("Bot activity has been updated.")
 
-def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    @commands.Cog.listener()
+    async def on_red_ready(self):
+        activity = await self.config.activity()
+        await self.update_bot_activity(activity)
+
