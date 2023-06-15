@@ -1,13 +1,13 @@
 import discord
 from discord.ext import commands, tasks
 from redbot.core import checks, commands, Config
-from rTrakt.Trakt import Trakt
+import trakt
 import asyncio
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.trakt_user = "Subestro"  # Replace with your Trakt username
+        self.trakt_user = "your_trakt_username"  # Replace with your Trakt username
         self.activity_task.start()
 
     def cog_unload(self):
@@ -16,7 +16,7 @@ class rTrakt(commands.Cog):
     @tasks.loop(seconds=10)
     async def activity_task(self):
         await self.bot.wait_until_ready()
-        trakt_activity = await Trakt.users(self.trakt_user).activity()
+        trakt_activity = await trakt.users(self.trakt_user).activity()
         # Parse the Trakt activity and extract the relevant information
         # You can customize how the activity is displayed in Discord
         activity_text = f"Currently watching: {trakt_activity[0].type} {trakt_activity[0].show.title}"
