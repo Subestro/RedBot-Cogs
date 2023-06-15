@@ -40,7 +40,7 @@ class rTrakt(commands.Cog):
                     return f"Watching {watched[0].movie.title}"
         except Exception as e:
             print(f"Error retrieving Trakt data: {e}")
-        return "Playing Nothing"
+        return "Nothing"
 
     async def update_bot_activity(self, activity):
         await self.config.activity.set(activity)
