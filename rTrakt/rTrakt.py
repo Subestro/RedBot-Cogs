@@ -13,9 +13,9 @@ class rTrakt(commands.Cog):
     async def get_current_watching_activity(self):
         try:
             trakt_config = await self.config.all()
-            client_id = trakt_config["client_id"]
-            client_secret = trakt_config["client_secret"]
-            access_token = trakt_config["access_token"]
+            client_id = trakt_config.get("client_id")
+            client_secret = trakt_config.get("client_secret")
+            access_token = trakt_config.get("access_token")
 
             if client_id and client_secret and access_token:
                 Trakt.configuration.defaults.client(
@@ -52,8 +52,8 @@ class rTrakt(commands.Cog):
         """Set Trakt authorization code."""
         try:
             trakt_config = await self.config.all()
-            client_id = trakt_config["client_id"]
-            client_secret = trakt_config["client_secret"]
+            client_id = trakt_config.get("client_id")
+            client_secret = trakt_config.get("client_secret")
             redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
 
             if client_id and client_secret:
