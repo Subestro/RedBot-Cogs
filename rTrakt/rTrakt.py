@@ -24,7 +24,7 @@ class rTrakt(commands.Cog):
         while not self.bot.is_closed():
             activity = await self.get_current_watching_activity()
             await self.update_bot_activity(activity)
-            await asyncio.sleep(5)  # Check every 5s
+            await asyncio.sleep(300)  # Check every 5 minutes
 
     async def get_current_watching_activity(self):
         try:
@@ -44,7 +44,7 @@ class rTrakt(commands.Cog):
                     return f"Watching {watched[0].title}"
         except Exception as e:
             print(f"Error retrieving Trakt data: {e}")
-        return "Nothing"
+        return "Playing Nothing"
 
     async def update_bot_activity(self, activity):
         await self.config.activity.set(activity)
@@ -63,9 +63,23 @@ class rTrakt(commands.Cog):
 
     @commands.command()
     @checks.is_owner()
-    async def setaccesstoken(self, ctx, access_token: str):
+    async def setaccesstoken(self, ctx, code: str):
+        trakt_config = await self.config.all()
+        client_id = trakt_config["client_id"]
+        client_secret = trakt_config["client_secret"]
+        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+
+        Trakt.configuration.defaults.client(
+            id=client_id,
+            secret=client_secret
+        )
+
+        token = await Trakt['oauth'].token_exchange(code, redirect_uri)
+        access_token = token['access_token']
+
         await self.config.access_token.set(access_token)
         await ctx.send("Trakt access token has been set.")
+        await ctx.send(f"Please check your Trakt connected apps section to verify the rTrakt app.")
 
     @commands.command()
     @checks.is_owner()
@@ -74,16 +88,4 @@ class rTrakt(commands.Cog):
         await ctx.send(f"Activity set to: {activity}")
 
     async def get_authorization_url(self):
-        trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-
-        Trakt.configuration.defaults.client(
-            id=client_id
-        )
-        auth = Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
-
-        return auth
-
-def setup(bot):
-    bot.add_cog(rTrakt(bot))
+        trakt
