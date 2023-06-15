@@ -38,7 +38,8 @@ class rTrakt(commands.Cog):
                     id=client_id,
                     secret=client_secret
                 )
-                trakt = Trakt(access_token=access_token)
+                trakt = Trakt()
+                trakt.configuration.oauth.from_response_code(access_token)
                 watched = await trakt['sync/watched'].movies()
                 if watched:
                     return f"Watching {watched[0].title}"
@@ -74,7 +75,7 @@ class rTrakt(commands.Cog):
             secret=client_secret
         )
 
-        token = await Trakt['oauth'].token_exchange(code, redirect_uri=redirect_uri)
+        token = await Trakt['oauth'].token_exchange(code, redirect_uri)
         access_token = token['access_token']
 
         await self.config.access_token.set(access_token)
