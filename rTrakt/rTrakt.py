@@ -38,8 +38,7 @@ class rTrakt(commands.Cog):
                     id=client_id,
                     secret=client_secret
                 )
-                trakt = Trakt()
-                trakt.configuration.oauth.from_response_code(access_token)
+                trakt = Trakt(access_token)
                 watched = await trakt['sync/watched'].movies()
                 if watched:
                     return f"Watching {watched[0].title}"
@@ -56,31 +55,12 @@ class rTrakt(commands.Cog):
 
     @commands.command()
     @checks.is_owner()
-    async def settraktcreds(self, ctx, client_id: str, client_secret: str):
+    async def settraktcreds(self, ctx, client_id: str, client_secret: str, access_token: str):
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
-        await ctx.send("Trakt API credentials have been set.")
-        await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
-
-    @commands.command()
-    @checks.is_owner()
-    async def setaccesstoken(self, ctx, code: str):
-        trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        client_secret = trakt_config["client_secret"]
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-
-        Trakt.configuration.defaults.client(
-            id=client_id,
-            secret=client_secret
-        )
-
-        token = await Trakt['oauth'].token_exchange(code, redirect_uri)
-        access_token = token['access_token']
-
         await self.config.access_token.set(access_token)
-        await ctx.send("Trakt access token has been set.")
-        await ctx.send(f"Please check your Trakt connected apps section to verify the rTrakt app.")
+        await ctx.send("Trakt API credentials and access token have been set.")
+        await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
 
     @commands.command()
     @checks.is_owner()
@@ -92,7 +72,12 @@ class rTrakt(commands.Cog):
         trakt_config = await self.config.all()
         client_id = trakt_config["client_id"]
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-        auth = Trakt['oauth'].authorize_url(client_id, redirect_uri=redirect_uri)
+
+        Trakt.configuration.defaults.client(
+            id=client_id
+        )
+        auth = Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
+
         return auth
 
 def setup(bot):
