@@ -38,7 +38,7 @@ class rTrakt(commands.Cog):
                     id=client_id,
                     secret=client_secret
                 )
-                trakt = Trakt(access_token)
+                trakt = Trakt(access_token=access_token)
                 watched = await trakt['sync/watched'].movies()
                 if watched:
                     return f"Watching {watched[0].title}"
@@ -74,7 +74,7 @@ class rTrakt(commands.Cog):
             secret=client_secret
         )
 
-        token = await Trakt['oauth'].token_exchange(code, redirect_uri)
+        token = await Trakt['oauth'].token_exchange(code, redirect_uri=redirect_uri)
         access_token = token['access_token']
 
         await self.config.access_token.set(access_token)
@@ -91,12 +91,7 @@ class rTrakt(commands.Cog):
         trakt_config = await self.config.all()
         client_id = trakt_config["client_id"]
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-
-        Trakt.configuration.defaults.client(
-            id=client_id
-        )
-        auth = Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
-
+        auth = Trakt['oauth'].authorize_url(client_id, redirect_uri=redirect_uri)
         return auth
 
 def setup(bot):
