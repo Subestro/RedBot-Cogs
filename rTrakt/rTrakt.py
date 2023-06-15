@@ -1,30 +1,14 @@
-import discord
-import asyncio
-from redbot.core import commands, checks, Config
+from redbot.core import commands
+from redbot.core.bot import Red
+from redbot.core.utils import chat_formatting as cf
 from trakt import Trakt
 
 class rTrakt(commands.Cog):
-    def __init__(self, bot):
+    """Cog for Trakt integration."""
+
+    def __init__(self, bot: Red):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
-        self.config.register_global(
-            client_id=None,
-            client_secret=None,
-            access_token=None,
-            activity=""
-        )
-
-        self.task = bot.loop.create_task(self.update_activity())
-
-    def cog_unload(self):
-        self.task.cancel()
-
-    async def update_activity(self):
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            activity = await self.get_current_watching_activity()
-            await self.update_bot_activity(activity)
-            await asyncio.sleep(2)  # Check every 2s
+        self.config = bot.get_cog("Config")
 
     async def get_current_watching_activity(self):
         try:
@@ -38,47 +22,78 @@ class rTrakt(commands.Cog):
                     id=client_id,
                     secret=client_secret
                 )
-                trakt = Trakt(access_token)
-                watched = await trakt['sync/watched'].movies()
-                if watched:
-                    return f"Watching {watched[0].title}"
+                Trakt.configuration.defaults.oauth.from_response_code(redirect_uri)
+                Trakt.configuration.defaults.oauth.token = access_token
+                Trakt.configuration.defaults.oauth.refresh()
+
+                trakt = Trakt()
+                trakt.sync.collection.get()
+                watched = trakt['sync/playback'].get()
+                if watched and watched.media_type == "episode":
+                    return f"Watching {watched.show.title} - Season {watched.episode.season} Episode {watched.episode.number}"
+                elif watched and watched.media_type == "movie":
+                    return f"Watching {watched.movie.title}"
         except Exception as e:
             print(f"Error retrieving Trakt data: {e}")
         return "Playing Nothing"
 
-    async def update_bot_activity(self, activity):
-        await self.config.activity.set(activity)
-        if activity:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
-        else:
-            await self.bot.change_presence(activity=None)
+    @commands.command()
+    async def settraktcreds(self, ctx: commands.Context, client_id: str, client_secret: str):
+        """Set Trakt API credentials."""
+        try:
+            await self.config.client_id.set(client_id)
+            await self.config.client_secret.set(client_secret)
+            await ctx.send(f"Trakt API credentials set successfully.")
+        except Exception as e:
+            await ctx.send(f"An error occurred while setting Trakt API credentials: {e}")
 
     @commands.command()
-    @checks.is_owner()
-    async def settraktcreds(self, ctx, client_id: str, client_secret: str, access_token: str):
-        await self.config.client_id.set(client_id)
-        await self.config.client_secret.set(client_secret)
-        await self.config.access_token.set(access_token)
-        await ctx.send("Trakt API credentials and access token have been set.")
-        await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
+    async def settraktcode(self, ctx: commands.Context, code: str):
+        """Set Trakt authorization code."""
+        try:
+            trakt_config = await self.config.all()
+            client_id = trakt_config["client_id"]
+            client_secret = trakt_config["client_secret"]
+            redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+
+            if client_id and client_secret:
+                Trakt.configuration.defaults.client(
+                    id=client_id,
+                    secret=client_secret
+                )
+                Trakt.configuration.defaults.oauth.from_response_code(redirect_uri)
+                Trakt.configuration.defaults.oauth.token_exchange(code, redirect_uri)
+
+                access_token = Trakt.configuration.defaults.oauth.token
+                await self.config.access_token.set(access_token)
+
+                await ctx.send("Trakt authorization code set successfully.")
+            else:
+                await ctx.send("Please set Trakt API credentials before authorizing the bot.")
+        except Exception as e:
+            await ctx.send(f"An error occurred while setting Trakt authorization code: {e}")
 
     @commands.command()
-    @checks.is_owner()
-    async def setactivity(self, ctx, *, activity: str):
-        await self.update_bot_activity(activity)
-        await ctx.send(f"Activity set to: {activity}")
+    async def traktstatus(self, ctx: commands.Context):
+        """Show Trakt scrobbler status."""
+        try:
+            activity = await self.get_current_watching_activity()
+            await ctx.send(cf.box(activity))
+        except Exception as e:
+            await ctx.send(f"An error occurred while retrieving Trakt scrobbler status: {e}")
 
-    async def get_authorization_url(self):
+    async def initialize(self):
         trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+        client_id = trakt_config.get("client_id")
+        client_secret = trakt_config.get("client_secret")
 
-        Trakt.configuration.defaults.client(
-            id=client_id
-        )
-        auth = Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
+        if client_id and client_secret:
+            Trakt.configuration.defaults.client(
+                id=client_id,
+                secret=client_secret
+            )
 
-        return auth
-
-def setup(bot):
-    bot.add_cog(rTrakt(bot))
+            access_token = trakt_config.get("access_token")
+            if access_token:
+                Trakt.configuration.defaults.oauth.token = access_token
+                Trakt.configuration.defaults.oauth.refresh()
