@@ -7,7 +7,7 @@ import asyncio
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.trakt_user = "subestro"  # Replace with your Trakt username
+        self.trakt_user = "your_trakt_username"  # Replace with your Trakt username
         self.activity_task.start()
 
     def cog_unload(self):
