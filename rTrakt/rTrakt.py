@@ -24,7 +24,7 @@ class rTrakt(commands.Cog):
         while not self.bot.is_closed():
             activity = await self.get_current_watching_activity()
             await self.update_bot_activity(activity)
-            await asyncio.sleep(300)  # Check every 5 minutes
+            await asyncio.sleep(2)  # Check every 2s
 
     async def get_current_watching_activity(self):
         try:
