@@ -57,10 +57,11 @@ class rTrakt(commands.Cog):
         await ctx.send(f"Please authorize the bot using the following link:\n\n{self.get_authorization_url()}")
 
     def get_authorization_url(self):
-        trakt_config = self.config.all()
-        client_id = trakt_config["client_id"]
+        trakt_config = await self.config.all()
+        client_id = await trakt_config.client_id()
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
         return f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}"
+
 
     @commands.command()
     @checks.is_owner()
