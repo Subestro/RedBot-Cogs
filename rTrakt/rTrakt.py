@@ -1,7 +1,7 @@
 import discord
 from redbot.core import commands, Config
 import trakt
-from trakt.errors import NotFoundException, AuthenticationError
+from trakt.errors import NotFoundException, TraktException
 import asyncio
 import requests
 
