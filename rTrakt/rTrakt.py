@@ -12,7 +12,6 @@ class rTrakt(commands.Cog):
             "client_secret": None
         }
         self.config.register_guild(**default_guild)
-        trakt.core.AUTH_METHOD = trakt.core.OAUTH_AUTH_METHOD
 
     @commands.group()
     async def rtraktset(self, ctx):
