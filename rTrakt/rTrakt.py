@@ -6,7 +6,7 @@ import trakt
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
+        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
         self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
         self.trakt_client = None
 
@@ -22,13 +22,7 @@ class rTrakt(commands.Cog):
         if access_token is None or refresh_token is None:
             raise commands.CommandError("Trakt tokens not set up.")
 
-        self.trakt_client = trakt.Trakt()
-        self.trakt_client.configuration.defaults.client(
-            id=client_id,
-            secret=client_secret,
-            access_token=access_token,
-            refresh_token=refresh_token
-        )
+        self.trakt_client = trakt.init(client_id=client_id, client_secret=client_secret, access_token=access_token, refresh_token=refresh_token)
 
     @commands.Cog.listener()
     async def on_red_ready(self):
@@ -41,9 +35,9 @@ class rTrakt(commands.Cog):
     async def check_credentials(self, ctx):
         try:
             await self.initialize_trakt_client()
-            user = self.trakt_client.user("me").get()
+            user = self.trakt_client.users.get()
             await ctx.send("Trakt credentials are valid.")
-        except trakt.errors.AuthenticationError:
+        except trakt.errors.AuthenticationException:
             await ctx.send("Invalid Trakt credentials.")
         except trakt.errors.NotFoundException:
             await ctx.send("Trakt user not found.")
@@ -73,25 +67,9 @@ class rTrakt(commands.Cog):
             await ctx.send("Token exchange failed. Please check the PIN.")
 
     def exchange_pin_for_tokens(self, client_id, client_secret, redirect_uri, pin):
-        token_url = 'https://trakt.tv/oauth/token'
-        payload = {
-            'code': pin,
-            'client_id': client_id,
-            'client_secret': client_secret,
-            'redirect_uri': redirect_uri,
-            'grant_type': 'authorization_code'
-        }
-
-        response = requests.post(token_url, data=payload)
-
-        if response.status_code == 200:
-            token_data = response.json()
-            access_token = token_data['access_token']
-            refresh_token = token_data['refresh_token']
-            return access_token, refresh_token
-        else:
-            print(f"Token exchange failed with status code {response.status_code}")
-            return None, None
+        auth = trakt.init(client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
+        auth_token = auth.exchange_pin(pin)
+        return auth_token['access_token'], auth_token['refresh_token']
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
