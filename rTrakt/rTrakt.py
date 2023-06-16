@@ -34,14 +34,11 @@ class rTrakt(commands.Cog):
             access_token = trakt_config["access_token"]
 
             if client_id and client_secret and access_token:
-                Trakt.configuration.defaults.client(
-                    id=client_id,
-                    secret=client_secret
-                )
-                trakt = Trakt(access_token)
-                watched = await trakt['sync/watched'].movies()
+                trakt.init(client_id=client_id, client_secret=client_secret, store=True)
+                trakt.set_authentication(access_token)
+                watched = await trakt.sync.watched_movies()
                 if watched:
-                    return f"Watching {watched[0].title}"
+                    return f"Watching {watched[0].movie.title}"
         except Exception as e:
             print(f"Error retrieving Trakt data: {e}")
         return "Nothing"
@@ -82,25 +79,20 @@ class rTrakt(commands.Cog):
         access_token = trakt_config["access_token"]
 
         if client_id and client_secret and access_token:
-            Trakt.configuration.defaults.client(
-                id=client_id,
-                secret=client_secret
-            )
-            trakt = Trakt(access_token)
-            user = await trakt['users/me'].get()
+            trakt.init(client_id=client_id, client_secret=client_secret, store=True)
+            trakt.set_authentication(access_token)
+            user = await trakt.users.me()
             await ctx.send(f"Trakt API credentials and access token are valid. Authorized user: {user.username}")
         else:
-            await ctx.send("Trakt API credentials and access token are not set.")
+            await ctx.send("Trakt API credentials and access token are not set")
 
     async def get_authorization_url(self):
         trakt_config = await self.config.all()
         client_id = trakt_config["client_id"]
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
 
-        Trakt.configuration.defaults.client(
-            id=client_id
-        )
-        auth = Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
+        trakt.init(client_id=client_id, store=True)
+        auth = trakt.oauth.token_url(redirect_uri=redirect_uri)
 
         return auth
 
