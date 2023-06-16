@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from redbot.core import commands, checks, Config
-import Trakt
+import trakt
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
