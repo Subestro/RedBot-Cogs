@@ -59,22 +59,22 @@ class rTrakt(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def set_tokens(self, ctx, authorization_code):
+    async def set_pin(self, ctx, pin):
         client_id = await self.config.client_id()
         client_secret = await self.config.client_secret()
         redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
-        access_token, refresh_token = self.exchange_code_for_tokens(client_id, client_secret, redirect_uri, authorization_code)
+        access_token, refresh_token = self.exchange_pin_for_tokens(client_id, client_secret, redirect_uri, pin)
         if access_token and refresh_token:
             await self.config.access_token.set(access_token)
             await self.config.refresh_token.set(refresh_token)
             await ctx.send("Trakt tokens have been set.")
         else:
-            await ctx.send("Token exchange failed. Please check the authorization code.")
+            await ctx.send("Token exchange failed. Please check the PIN.")
 
-    def exchange_code_for_tokens(self, client_id, client_secret, redirect_uri, authorization_code):
+    def exchange_pin_for_tokens(self, client_id, client_secret, redirect_uri, pin):
         token_url = 'https://trakt.tv/oauth/token'
         payload = {
-            'code': authorization_code,
+            'code': pin,
             'client_id': client_id,
             'client_secret': client_secret,
             'redirect_uri': redirect_uri,
