@@ -1,13 +1,15 @@
 import discord
 from redbot.core import commands, Config
-import requests
 import trakt
+from trakt.errors import NotFoundException, AuthenticationError
+import asyncio
+import requests
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
-        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
+        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None, channel_id=None)
         self.trakt_client = None
 
     async def initialize_trakt_client(self):
@@ -22,21 +24,48 @@ class rTrakt(commands.Cog):
         if access_token is None or refresh_token is None:
             raise commands.CommandError("Trakt tokens not set up.")
 
-        trakt.Trakt.configuration.defaults.client(
+        self.trakt_client = trakt.Trakt()
+        self.trakt_client.configuration.defaults.client(
             id=client_id,
             secret=client_secret,
             access_token=access_token,
             refresh_token=refresh_token
         )
 
-        self.trakt_client = trakt.Trakt()
+    async def send_watching_status(self, show_name):
+        channel_id = await self.config.channel_id()
+        if channel_id:
+            channel = self.bot.get_channel(channel_id)
+            await channel.send(f"Currently watching: {show_name}")
 
     @commands.Cog.listener()
     async def on_red_ready(self):
         try:
             await self.initialize_trakt_client()
+            await self.check_scrobbling_status()
+            self.start_periodic_check()  # Start periodic checks
         except commands.CommandError as e:
             print(e)
+
+    async def check_scrobbling_status(self):
+        try:
+            user = self.trakt_client.users.get("me")
+            watching = user.watching()
+            if watching is not None:
+                await self.send_watching_status(watching.get("show").title)
+        except NotFoundException:
+            print("Trakt user not found.")
+        except AuthenticationError:
+            print("Invalid Trakt credentials.")
+
+    def start_periodic_check(self):
+        interval_seconds = 10  # Adjust the interval as desired (in seconds)
+        self.bot.loop.create_task(self.periodic_check(interval_seconds))
+
+    async def periodic_check(self, interval_seconds):
+        while True:
+            await asyncio.sleep(interval_seconds)
+            await self.check_scrobbling_status()
 
     @commands.command()
     @commands.is_owner()
@@ -52,7 +81,7 @@ class rTrakt(commands.Cog):
         client_id = await self.config.client_id()
         client_secret = await self.config.client_secret()
         redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
-        access_token, refresh_token = self.exchange_pin_for_tokens(client_id, client_secret, redirect_uri, pin)
+        access_token, refresh_token = await self.exchange_pin_for_tokens(client_id, client_secret, redirect_uri, pin)
         if access_token and refresh_token:
             await self.config.access_token.set(access_token)
             await self.config.refresh_token.set(refresh_token)
@@ -60,7 +89,7 @@ class rTrakt(commands.Cog):
         else:
             await ctx.send("Token exchange failed. Please check the PIN.")
 
-    def exchange_pin_for_tokens(self, client_id, client_secret, redirect_uri, pin):
+    async def exchange_pin_for_tokens(self, client_id, client_secret, redirect_uri, pin):
         token_url = 'https://trakt.tv/oauth/token'
         payload = {
             'code': pin,
@@ -82,13 +111,10 @@ class rTrakt(commands.Cog):
             return None, None
 
     @commands.command()
-    async def trakt_connected(self, ctx):
-        try:
-            await self.initialize_trakt_client()
-            user = self.trakt_client.users("me").get()
-            await ctx.send("Trakt is connected and credentials are valid.")
-        except Exception as e:
-            await ctx.send(str(e))
+    @commands.is_owner()
+    async def set_watching_channel(self, ctx, channel: discord.TextChannel):
+        await self.config.channel_id.set(channel.id)
+        await ctx.send(f"Watching updates will be sent to the channel: {channel.mention}")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
