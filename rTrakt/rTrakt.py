@@ -2,6 +2,7 @@ import discord
 from redbot.core import commands, Config
 import requests
 import trakt
+import asyncio
 from trakt.errors import NotFoundException, TraktException
 
 class rTrakt(commands.Cog):
@@ -121,6 +122,12 @@ class rTrakt(commands.Cog):
             await ctx.send("Trakt user not found.")
         except TraktException:
             await ctx.send("Invalid Trakt credentials.")
+
+    @commands.command()
+    @commands.is_owner()
+    async def set_watching_channel(self, ctx, channel: discord.TextChannel):
+        await self.config.channel_id.set(channel.id)
+        await ctx.send(f"Watching status channel set to: {channel.mention}")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
