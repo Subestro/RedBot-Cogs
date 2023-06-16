@@ -22,13 +22,14 @@ class rTrakt(commands.Cog):
         if access_token is None or refresh_token is None:
             raise commands.CommandError("Trakt tokens not set up.")
 
-        self.trakt_client = trakt.Trakt()
-        self.trakt_client.configuration.defaults.client(
+        trakt.Trakt.configuration.defaults.client(
             id=client_id,
             secret=client_secret,
             access_token=access_token,
             refresh_token=refresh_token
         )
+
+        self.trakt_client = trakt.Trakt()
 
     @commands.Cog.listener()
     async def on_red_ready(self):
@@ -84,7 +85,7 @@ class rTrakt(commands.Cog):
     async def trakt_connected(self, ctx):
         try:
             await self.initialize_trakt_client()
-            user = self.trakt_client.user("me").get()
+            user = self.trakt_client.users("me").get()
             await ctx.send("Trakt is connected and credentials are valid.")
         except Exception as e:
             await ctx.send(str(e))
