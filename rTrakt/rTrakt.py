@@ -1,15 +1,14 @@
 import discord
 from redbot.core import commands, Config
+import requests
 import trakt
 from trakt.errors import NotFoundException, TraktException
-import asyncio
-import requests
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
-        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None, channel_id=None)
+        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
         self.trakt_client = None
 
     async def initialize_trakt_client(self):
@@ -32,20 +31,22 @@ class rTrakt(commands.Cog):
             refresh_token=refresh_token
         )
 
-    async def send_watching_status(self, show_name):
-        channel_id = await self.config.channel_id()
-        if channel_id:
-            channel = self.bot.get_channel(channel_id)
-            await channel.send(f"Currently watching: {show_name}")
-
     @commands.Cog.listener()
     async def on_red_ready(self):
         try:
             await self.initialize_trakt_client()
-            await self.check_scrobbling_status()
-            self.start_periodic_check()  # Start periodic checks
+            self.start_periodic_check()
         except commands.CommandError as e:
             print(e)
+
+    def start_periodic_check(self):
+        interval_seconds = 10  # Adjust the interval as desired (in seconds)
+        self.bot.loop.create_task(self.periodic_check(interval_seconds))
+
+    async def periodic_check(self, interval_seconds):
+        while True:
+            await self.check_scrobbling_status()
+            await asyncio.sleep(interval_seconds)
 
     async def check_scrobbling_status(self):
         try:
@@ -58,14 +59,11 @@ class rTrakt(commands.Cog):
         except TraktException:
             print("Invalid Trakt credentials.")
 
-    def start_periodic_check(self):
-        interval_seconds = 10  # Adjust the interval as desired (in seconds)
-        self.bot.loop.create_task(self.periodic_check(interval_seconds))
-
-    async def periodic_check(self, interval_seconds):
-        while True:
-            await asyncio.sleep(interval_seconds)
-            await self.check_scrobbling_status()
+    async def send_watching_status(self, show_title):
+        channel_id = await self.config.channel_id()
+        if channel_id is not None:
+            channel = self.bot.get_channel(channel_id)
+            await channel.send(f"Currently watching: {show_title}")
 
     @commands.command()
     @commands.is_owner()
@@ -111,10 +109,18 @@ class rTrakt(commands.Cog):
             return None, None
 
     @commands.command()
-    @commands.is_owner()
-    async def set_watching_channel(self, ctx, channel: discord.TextChannel):
-        await self.config.channel_id.set(channel.id)
-        await ctx.send(f"Watching updates will be sent to the channel: {channel.mention}")
+    async def check_watching(self, ctx):
+        try:
+            user = self.trakt_client.users.get("me")
+            watching = user.watching()
+            if watching is not None:
+                await ctx.send(f"Currently watching: {watching.get('show').title}")
+            else:
+                await ctx.send("Not currently watching anything.")
+        except NotFoundException:
+            await ctx.send("Trakt user not found.")
+        except TraktException:
+            await ctx.send("Invalid Trakt credentials.")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
