@@ -10,7 +10,7 @@ class rTrakt(commands.Cog):
     @commands.Cog.listener()
     async def on_red_ready(self):
         # Initialize Trakt client
-        self.trakt_client = trakt.Trakt("YOUR_CLIENT_ID", "YOUR_CLIENT_SECRET")
+        self.trakt_client = trakt.Trakt("4129a600893f2b057301ef356e96277f0bf2898c205ff02e6dcfdeecef899b42", "be487ee7080112b005cd8008157eceb022a14740e7f10bbc6c571803893dbda5")
 
     @commands.command()
     async def check_credentials(self, ctx):
