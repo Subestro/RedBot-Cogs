@@ -1,11 +1,11 @@
 import discord
 from redbot.core import commands, Config
-import trakt
+import requests
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567765)  # Replace with a unique identifier
+        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
         self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
         self.trakt_client = None
 
@@ -21,11 +21,13 @@ class rTrakt(commands.Cog):
         if access_token is None or refresh_token is None:
             raise commands.CommandError("Trakt tokens not set up.")
 
-        trakt.core.CLIENT_ID = client_id
-        trakt.core.CLIENT_SECRET = client_secret
-        trakt.core.OAUTH_TOKEN = access_token
-        trakt.core.OAUTH_REFRESH_TOKEN = refresh_token
         self.trakt_client = trakt.Trakt()
+        self.trakt_client.configuration.defaults.client(
+            id=client_id,
+            secret=client_secret,
+            access_token=access_token,
+            refresh_token=refresh_token
+        )
 
     @commands.Cog.listener()
     async def on_red_ready(self):
@@ -57,10 +59,38 @@ class rTrakt(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def set_tokens(self, ctx, access_token, refresh_token):
-        await self.config.access_token.set(access_token)
-        await self.config.refresh_token.set(refresh_token)
-        await ctx.send("Trakt tokens have been set.")
+    async def set_tokens(self, ctx, authorization_code):
+        client_id = await self.config.client_id()
+        client_secret = await self.config.client_secret()
+        redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+        access_token, refresh_token = self.exchange_code_for_tokens(client_id, client_secret, redirect_uri, authorization_code)
+        if access_token and refresh_token:
+            await self.config.access_token.set(access_token)
+            await self.config.refresh_token.set(refresh_token)
+            await ctx.send("Trakt tokens have been set.")
+        else:
+            await ctx.send("Token exchange failed. Please check the authorization code.")
+
+    def exchange_code_for_tokens(self, client_id, client_secret, redirect_uri, authorization_code):
+        token_url = 'https://trakt.tv/oauth/token'
+        payload = {
+            'code': authorization_code,
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+            'grant_type': 'authorization_code'
+        }
+
+        response = requests.post(token_url, data=payload)
+
+        if response.status_code == 200:
+            token_data = response.json()
+            access_token = token_data['access_token']
+            refresh_token = token_data['refresh_token']
+            return access_token, refresh_token
+        else:
+            print(f"Token exchange failed with status code {response.status_code}")
+            return None, None
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
