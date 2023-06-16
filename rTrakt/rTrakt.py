@@ -73,6 +73,25 @@ class rTrakt(commands.Cog):
         await self.update_bot_activity(activity)
         await ctx.send(f"Activity set to: {activity}")
 
+    @commands.command()
+    @checks.is_owner()
+    async def trakttokeninfo(self, ctx):
+        trakt_config = await self.config.all()
+        client_id = trakt_config["client_id"]
+        client_secret = trakt_config["client_secret"]
+        access_token = trakt_config["access_token"]
+
+        if client_id and client_secret and access_token:
+            Trakt.configuration.defaults.client(
+                id=client_id,
+                secret=client_secret
+            )
+            trakt = Trakt(access_token)
+            user = await trakt['users/me'].get()
+            await ctx.send(f"Trakt API credentials and access token are valid. Authorized user: {user.username}")
+        else:
+            await ctx.send("Trakt API credentials and access token are not set.")
+
     async def get_authorization_url(self):
         trakt_config = await self.config.all()
         client_id = trakt_config["client_id"]
