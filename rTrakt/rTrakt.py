@@ -86,11 +86,7 @@ class rTrakt(commands.Cog):
             await self.initialize_trakt_client()
             user = self.trakt_client.user("me").get()
             await ctx.send("Trakt is connected and credentials are valid.")
-        except trakt.errors.AuthenticationError:
-            await ctx.send("Invalid Trakt credentials.")
-        except trakt.errors.NotFoundException:
-            await ctx.send("Trakt user not found.")
-        except commands.CommandError as e:
+        except Exception as e:
             await ctx.send(str(e))
 
 def setup(bot):
