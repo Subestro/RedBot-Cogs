@@ -55,7 +55,7 @@ class rTrakt(commands.Cog):
                 await self.send_watching_status(watching.get("show").title)
         except NotFoundException:
             print("Trakt user not found.")
-        except AuthenticationError:
+        except TraktException:
             print("Invalid Trakt credentials.")
 
     def start_periodic_check(self):
