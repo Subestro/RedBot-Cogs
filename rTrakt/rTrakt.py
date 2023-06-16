@@ -55,12 +55,17 @@ class rTrakt(commands.Cog):
 
     @commands.command()
     @checks.is_owner()
-    async def settraktcreds(self, ctx, client_id: str, client_secret: str, access_token: str):
+    async def settraktcreds(self, ctx, client_id: str, client_secret: str):
         await self.config.client_id.set(client_id)
         await self.config.client_secret.set(client_secret)
-        await self.config.access_token.set(access_token)
-        await ctx.send("Trakt API credentials and access token have been set.")
+        await ctx.send("Trakt API credentials have been set.")
         await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
+
+    @commands.command()
+    @checks.is_owner()
+    async def settrakttoken(self, ctx, access_token: str):
+        await self.config.access_token.set(access_token)
+        await ctx.send("Trakt access token has been set.")
 
     @commands.command()
     @checks.is_owner()
