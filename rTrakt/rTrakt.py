@@ -6,7 +6,7 @@ import trakt
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
+        self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
         self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
         self.trakt_client = None
 
@@ -36,19 +36,6 @@ class rTrakt(commands.Cog):
             await self.initialize_trakt_client()
         except commands.CommandError as e:
             print(e)
-
-    @commands.command()
-    async def check_credentials(self, ctx):
-        try:
-            await self.initialize_trakt_client()
-            user = self.trakt_client.user("me").get()
-            await ctx.send("Trakt credentials are valid.")
-        except trakt.errors.AuthenticationError:
-            await ctx.send("Invalid Trakt credentials.")
-        except trakt.errors.NotFoundException:
-            await ctx.send("Trakt user not found.")
-        except commands.CommandError as e:
-            await ctx.send(str(e))
 
     @commands.command()
     @commands.is_owner()
@@ -92,6 +79,19 @@ class rTrakt(commands.Cog):
         else:
             print(f"Token exchange failed with status code {response.status_code}")
             return None, None
+
+    @commands.command()
+    async def trakt_connected(self, ctx):
+        try:
+            await self.initialize_trakt_client()
+            user = self.trakt_client.user("me").get()
+            await ctx.send("Trakt is connected and credentials are valid.")
+        except trakt.errors.AuthenticationError:
+            await ctx.send("Invalid Trakt credentials.")
+        except trakt.errors.NotFoundException:
+            await ctx.send("Trakt user not found.")
+        except commands.CommandError as e:
+            await ctx.send(str(e))
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
