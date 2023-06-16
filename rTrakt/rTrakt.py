@@ -1,108 +1,77 @@
 import discord
-import asyncio
-from redbot.core import commands, checks, Config
+from redbot.core import commands, Config
 import trakt
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
-        self.config.register_global(
-            client_id=None,
-            client_secret=None,
-            access_token=None,
-            activity=""
-        )
+        self.config = Config.get_conf(self, identifier=1234567890)  # Use a unique identifier for your cog
+        default_guild = {
+            "channel_id": None,
+            "client_id": None,
+            "client_secret": None
+        }
+        self.config.register_guild(**default_guild)
+        trakt.core.AUTH_METHOD = trakt.core.OAUTH_AUTH_METHOD
 
-        self.task = bot.loop.create_task(self.update_activity())
+    @commands.group()
+    async def rtraktset(self, ctx):
+        """Commands to set rTrakt settings"""
+        pass
 
-    def cog_unload(self):
-        self.task.cancel()
+    @rtraktset.command()
+    async def channel(self, ctx, channel: discord.TextChannel):
+        """Set the channel where the results should be sent"""
+        await self.config.guild(ctx.guild).channel_id.set(channel.id)
+        await ctx.send(f"Results will be sent to {channel.mention}")
 
-    async def update_activity(self):
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            activity = await self.get_current_watching_activity()
-            await self.update_bot_activity(activity)
-            await asyncio.sleep(2)  # Check every 2s
+    @rtraktset.command()
+    async def credentials(self, ctx, client_id, client_secret):
+        """Set the Trakt API credentials"""
+        await self.config.guild(ctx.guild).client_id.set(client_id)
+        await self.config.guild(ctx.guild).client_secret.set(client_secret)
+        await ctx.send("Trakt API credentials set!")
 
-    async def get_current_watching_activity(self):
+    @commands.command()
+    async def checkcredentials(self, ctx):
+        """Check if the Trakt API credentials are working"""
+        client_id = await self.config.guild(ctx.guild).client_id()
+        client_secret = await self.config.guild(ctx.guild).client_secret()
+        if client_id is None or client_secret is None:
+            await ctx.send("API credentials not set. Use `[p]rtraktset credentials` to set the credentials.")
+            return
+
         try:
-            trakt_config = await self.config.all()
-            client_id = trakt_config["client_id"]
-            client_secret = trakt_config["client_secret"]
-            access_token = trakt_config["access_token"]
+            trakt.init(client_id=client_id, client_secret=client_secret)
+            trakt_user = trakt.users.User("me")
+            watched = trakt_user.watched(type="episodes", limit=1)
+            await ctx.send("API credentials are working!")
+        except trakt.errors.APIException as e:
+            await ctx.send(f"API credentials are not valid. Error: {str(e)}")
 
-            if client_id and client_secret and access_token:
-                trakt.Trakt.configuration.defaults.client(
-                    id=client_id,
-                    secret=client_secret
-                )
-                trakt.Trakt.configuration.defaults.oauth.from_response_code(access_token)
-                watched = await trakt.Trakt['sync/watched'].movies()
-                if watched:
-                    return f"Watching {watched[0].title}"
-        except Exception as e:
-            print(f"Error retrieving Trakt data: {e}")
-        return "Nothing"
+    @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        if before.bot:
+            return
 
-    async def update_bot_activity(self, activity):
-        await self.config.activity.set(activity)
-        if activity:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
-        else:
-            await self.bot.change_presence(activity=None)
+        channel_id = await self.config.guild(after.guild).channel_id()
+        if channel_id is None:
+            return
 
-    @commands.command()
-    @checks.is_owner()
-    async def settraktcreds(self, ctx, client_id: str, client_secret: str):
-        await self.config.client_id.set(client_id)
-        await self.config.client_secret.set(client_secret)
-        await ctx.send("Trakt API credentials have been set.")
-        await ctx.send(f"Please authorize the bot using the following link:\n\n{await self.get_authorization_url()}")
+        client_id = await self.config.guild(after.guild).client_id()
+        client_secret = await self.config.guild(after.guild).client_secret()
+        if client_id is None or client_secret is None:
+            return
 
-    @commands.command()
-    @checks.is_owner()
-    async def settrakttoken(self, ctx, access_token: str):
-        await self.config.access_token.set(access_token)
-        await ctx.send("Trakt access token has been set.")
+        trakt.init(client_id=client_id, client_secret=client_secret)
+        trakt_user = trakt.users.User("me")
+        watched = trakt_user.watched(type="episodes", limit=1)
 
-    @commands.command()
-    @checks.is_owner()
-    async def setactivity(self, ctx, *, activity: str):
-        await self.update_bot_activity(activity)
-        await ctx.send(f"Activity set to: {activity}")
-
-    @commands.command()
-    @checks.is_owner()
-    async def trakttokeninfo(self, ctx):
-        trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        client_secret = trakt_config["client_secret"]
-        access_token = trakt_config["access_token"]
-
-        if client_id and client_secret and access_token:
-            trakt.Trakt.configuration.defaults.client(
-                id=client_id,
-                secret=client_secret
-            )
-            trakt.Trakt.configuration.defaults.oauth.from_response_code(access_token)
-            user = await trakt.Trakt.users.me()
-            await ctx.send(f"Trakt API credentials and access token are valid. Connected to user: {user.username}")
-        else:
-            await ctx.send("Trakt API credentials or access token are not set")
-
-    async def get_authorization_url(self):
-        trakt_config = await self.config.all()
-        client_id = trakt_config["client_id"]
-        redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-
-        trakt.Trakt.configuration.defaults.client(
-            id=client_id
-        )
-        auth = trakt.Trakt['oauth'].authorize_url(redirect_uri=redirect_uri)
-
-        return auth
+        if watched:
+            title = watched[0].show.title
+            channel = self.bot.get_channel(channel_id)
+            await channel.send(f"{after.display_name} is currently watching: {title}")
 
 def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    cog = rTrakt(bot)
+    bot.add_cog(cog)
