@@ -34,7 +34,7 @@ class rTrakt(commands.Cog):
             access_token = trakt_config["access_token"]
 
             if client_id and client_secret and access_token:
-                trakt.init(client_id=client_id, client_secret=client_secret, store=True)
+                trakt.setup(client_id=client_id, client_secret=client_secret, store=True)
                 trakt.set_authentication(access_token)
                 watched = await trakt.sync.watched_movies()
                 if watched:
@@ -79,7 +79,7 @@ class rTrakt(commands.Cog):
         access_token = trakt_config["access_token"]
 
         if client_id and client_secret and access_token:
-            trakt.init(client_id=client_id, client_secret=client_secret, store=True)
+            trakt.setup(client_id=client_id, client_secret=client_secret, store=True)
             trakt.set_authentication(access_token)
             user = await trakt.users.me()
             await ctx.send(f"Trakt API credentials and access token are valid. Authorized user: {user.username}")
@@ -91,7 +91,7 @@ class rTrakt(commands.Cog):
         client_id = trakt_config["client_id"]
         redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
 
-        trakt.init(client_id=client_id, store=True)
+        trakt.setup(client_id=client_id, store=True)
         auth = trakt.oauth.token_url(redirect_uri=redirect_uri)
 
         return auth
