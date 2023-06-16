@@ -5,7 +5,7 @@ import trakt
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
+        self.config = Config.get_conf(self, identifier=1234567765)  # Replace with a unique identifier
         self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
         self.trakt_client = None
 
