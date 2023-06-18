@@ -11,6 +11,7 @@ class rTrakt(commands.Cog):
         self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
         self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None, username=None)
         self.trakt_client = None
+        asyncio.create_task(self.initialize_trakt_client())  # Call the function as a task
 
     async def initialize_trakt_client(self):
         client_id = await self.config.client_id()
@@ -34,11 +35,7 @@ class rTrakt(commands.Cog):
 
     @commands.Cog.listener()
     async def on_red_ready(self):
-        try:
-            await self.initialize_trakt_client()
-            self.start_periodic_check()
-        except commands.CommandError as e:
-            print(e)
+        self.start_periodic_check()
 
     def start_periodic_check(self):
         interval_seconds = 10  # Adjust the interval as desired (in seconds)
