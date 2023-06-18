@@ -25,13 +25,7 @@ class rTrakt(commands.Cog):
         if access_token is None or refresh_token is None:
             raise commands.CommandError("Trakt tokens not set up.")
 
-        self.trakt_client = trakt.Trakt()
-        self.trakt_client.configuration.defaults.client(
-            id=client_id,
-            secret=client_secret,
-            access_token=access_token,
-            refresh_token=refresh_token
-        )
+        self.trakt_client = trakt.Trakt(client_id, client_secret, access_token, refresh_token)
 
     @commands.Cog.listener()
     async def on_red_ready(self):
@@ -43,15 +37,15 @@ class rTrakt(commands.Cog):
 
     async def periodic_check(self, interval_seconds):
         while True:
-            await self.check_scrobbling_status()
+            await self.check_watching()
             await asyncio.sleep(interval_seconds)
 
-    async def check_scrobbling_status(self):
+    async def check_watching(self):
         try:
-            user = self.trakt_client.users.get("me")
+            user = trakt.users.User("me")
             watching = user.watching()
             if watching is not None:
-                await self.send_watching_status(watching.get("show").title)
+                await self.send_watching_status(watching.title)
         except NotFoundException:
             print("Trakt user not found.")
         except TraktException:
@@ -82,49 +76,6 @@ class rTrakt(commands.Cog):
             await self.config.access_token.set(access_token)
             await self.config.refresh_token.set(refresh_token)
             await ctx.send("Trakt tokens have been set.")
-        else:
-            await ctx.send("Token exchange failed. Please check the PIN.")
-
-    async def exchange_pin_for_tokens(self, client_id, client_secret, redirect_uri, pin):
-        token_url = 'https://trakt.tv/oauth/token'
-        payload = {
-            'code': pin,
-            'client_id': client_id,
-            'client_secret': client_secret,
-            'redirect_uri': redirect_uri,
-            'grant_type': 'authorization_code'
-        }
-
-        response = requests.post(token_url, data=payload)
-
-        if response.status_code == 200:
-            token_data = response.json()
-            access_token = token_data['access_token']
-            refresh_token = token_data['refresh_token']
-            return access_token, refresh_token
-        else:
-            print(f"Token exchange failed with status code {response.status_code}")
-            return None, None
-
-    @commands.command()
-    async def check_watching(self, ctx):
-        try:
-            user = self.trakt_client.users.get("me")
-            watching = user.watching()
-            if watching is not None:
-                await ctx.send(f"Currently watching: {watching.get('show').title}")
-            else:
-                await ctx.send("Not currently watching anything.")
-        except NotFoundException:
-            await ctx.send("Trakt user not found.")
-        except TraktException:
-            await ctx.send("Invalid Trakt credentials.")
-
-    @commands.command()
-    @commands.is_owner()
-    async def set_watching_channel(self, ctx, channel: discord.TextChannel):
-        await self.config.channel_id.set(channel.id)
-        await ctx.send(f"Watching status channel set to: {channel.mention}")
 
 def setup(bot):
-    bot.add_cog(rTrakt(bot))
+    bot.add_cog(rTrakt
