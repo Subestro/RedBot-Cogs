@@ -5,11 +5,19 @@ import trakt
 import asyncio
 from trakt.errors import NotFoundException, TraktException
 
+
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
-        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None, username=None)
+        self.config.register_global(
+            client_id=None,
+            client_secret=None,
+            access_token=None,
+            refresh_token=None,
+            username=None,
+            channel_id=None
+        )
         self.trakt_client = None
 
     async def initialize_trakt_client(self):
@@ -17,12 +25,16 @@ class rTrakt(commands.Cog):
         client_secret = await self.config.client_secret()
         access_token = await self.config.access_token()
         refresh_token = await self.config.refresh_token()
+        username = await self.config.username()
 
         if client_id is None or client_secret is None:
             raise commands.CommandError("Trakt credentials not set up.")
 
         if access_token is None or refresh_token is None:
             raise commands.CommandError("Trakt tokens not set up.")
+
+        if username is None:
+            raise commands.CommandError("Trakt username not set up.")
 
         self.trakt_client = trakt.Trakt()
         self.trakt_client.configuration.defaults.client(
@@ -31,6 +43,7 @@ class rTrakt(commands.Cog):
             access_token=access_token,
             refresh_token=refresh_token
         )
+        self.trakt_client.configuration.defaults.user(username)
 
     @commands.Cog.listener()
     async def on_red_ready(self):
@@ -131,11 +144,6 @@ class rTrakt(commands.Cog):
         await self.config.channel_id.set(channel.id)
         await ctx.send(f"Watching status channel set to: {channel.mention}")
 
-    @commands.command()
-    @commands.is_owner()
-    async def set_trakt_user(self, ctx, username):
-        await self.config.username.set(username)
-        await ctx.send(f"Trakt username set to: {username}")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
