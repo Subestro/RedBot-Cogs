@@ -9,7 +9,7 @@ class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
-        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None, username=None)
+        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
         self.trakt_client = None
         asyncio.create_task(self.initialize_trakt_client())  # Call the function as a task
 
@@ -48,12 +48,7 @@ class rTrakt(commands.Cog):
 
     async def check_scrobbling_status(self):
         try:
-            username = await self.config.username()
-            if username is None:
-                print("Trakt username not set.")
-                return
-
-            user = self.trakt_client.users.get(username)
+            user = self.trakt_client.users.get("me")
             watching = user.watching()
             if watching is not None:
                 await self.send_watching_status(watching.get("show").title)
@@ -114,12 +109,7 @@ class rTrakt(commands.Cog):
     @commands.command()
     async def check_watching(self, ctx):
         try:
-            username = await self.config.username()
-            if username is None:
-                await ctx.send("Trakt username not set.")
-                return
-
-            user = self.trakt_client.users.get(username)
+            user = self.trakt_client.users.get("me")
             watching = user.watching()
             if watching is not None:
                 await ctx.send(f"Currently watching: {watching.get('show').title}")
@@ -135,12 +125,6 @@ class rTrakt(commands.Cog):
     async def set_watching_channel(self, ctx, channel: discord.TextChannel):
         await self.config.channel_id.set(channel.id)
         await ctx.send(f"Watching status channel set to: {channel.mention}")
-
-    @commands.command()
-    @commands.is_owner()
-    async def set_trakt_username(self, ctx, username):
-        await self.config.username.set(username)
-        await ctx.send(f"Trakt username set to: {username}")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
