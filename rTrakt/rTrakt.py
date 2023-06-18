@@ -78,4 +78,5 @@ class rTrakt(commands.Cog):
             await ctx.send("Trakt tokens have been set.")
 
 def setup(bot):
-    bot.add_cog(rTrakt
+bot.add_cog(rTrakt(bot))
+
