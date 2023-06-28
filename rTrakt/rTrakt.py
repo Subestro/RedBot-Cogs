@@ -2,63 +2,93 @@ import discord
 from redbot.core import commands, Config
 import requests
 import trakt
-import asyncio
-from trakt.errors import NotFoundException, TraktException
 
 class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567000)  # Change identifier to a unique integer
-        default_global = {
-            "trakt_client_id": None,
-            "trakt_client_secret": None
-        }
-        self.config.register_global(**default_global)
-        self.channel_id = None
-        self.last_watched = None
-        self.check_watching.start()
+        self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
+        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
+        self.trakt_client = None
 
-    @commands.command()
-    async def set_channel(self, ctx, channel: discord.TextChannel):
-        """Set the channel where the messages will be sent."""
-        self.channel_id = channel.id
-        await ctx.send(f"Channel set to {channel.mention}")
+    async def initialize_trakt_client(self):
+        client_id = await self.config.client_id()
+        client_secret = await self.config.client_secret()
+        access_token = await self.config.access_token()
+        refresh_token = await self.config.refresh_token()
 
-    @commands.command()
-    async def set_credentials(self, ctx, client_id, client_secret):
-        """Set the Trakt API credentials."""
-        await self.config.trakt_client_id.set(client_id)
-        await self.config.trakt_client_secret.set(client_secret)
-        await ctx.send("Trakt API credentials set")
+        if client_id is None or client_secret is None:
+            raise commands.CommandError("Trakt credentials not set up.")
 
-    @tasks.loop(seconds=5)
-    async def check_watching(self):
-        trakt_client_id = await self.config.trakt_client_id()
-        trakt_client_secret = await self.config.trakt_client_secret()
+        if access_token is None or refresh_token is None:
+            raise commands.CommandError("Trakt tokens not set up.")
 
-        if self.channel_id is not None and trakt_client_id is not None and trakt_client_secret is not None:
-            await self.get_watching(trakt_client_id, trakt_client_secret)
-
-    async def get_watching(self, client_id, client_secret):
-        trakt.configuration.defaults.client(
+        trakt.Trakt.configuration.defaults.client(
             id=client_id,
             secret=client_secret,
-            store=True
+            access_token=access_token,
+            refresh_token=refresh_token
         )
-        user = trakt.users.User("me")
-        try:
-            watched = user.watching(type="movie,episode")
-            if watched and watched["watching"]:
-                title = watched["watching"]["title"]
-                if title != self.last_watched:
-                    await self.bot.get_channel(self.channel_id).send(f"Now watching: {title}")
-                    self.last_watched = title
-        except (NotFoundException, TraktException):
-            pass
 
-    @check_watching.before_loop
-    async def before_check_watching(self):
-        await self.bot.wait_until_ready()
+        self.trakt_client = trakt.Trakt()
+
+    @commands.Cog.listener()
+    async def on_red_ready(self):
+        try:
+            await self.initialize_trakt_client()
+        except commands.CommandError as e:
+            print(e)
+
+    @commands.command()
+    @commands.is_owner()
+    async def set_client_credentials(self, ctx, client_id, client_secret):
+        await self.config.client_id.set(client_id)
+        await self.config.client_secret.set(client_secret)
+        auth_url = f"https://trakt.tv/oauth/authorize?response_type=code&client_id={client_id}&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
+        await ctx.send(f"Trakt client credentials have been set. Authorize the application using this link:\n{auth_url}")
+
+    @commands.command()
+    @commands.is_owner()
+    async def set_pin(self, ctx, pin):
+        client_id = await self.config.client_id()
+        client_secret = await self.config.client_secret()
+        redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+        access_token, refresh_token = self.exchange_pin_for_tokens(client_id, client_secret, redirect_uri, pin)
+        if access_token and refresh_token:
+            await self.config.access_token.set(access_token)
+            await self.config.refresh_token.set(refresh_token)
+            await ctx.send("Trakt tokens have been set.")
+        else:
+            await ctx.send("Token exchange failed. Please check the PIN.")
+
+    def exchange_pin_for_tokens(self, client_id, client_secret, redirect_uri, pin):
+        token_url = 'https://trakt.tv/oauth/token'
+        payload = {
+            'code': pin,
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+            'grant_type': 'authorization_code'
+        }
+
+        response = requests.post(token_url, data=payload)
+
+        if response.status_code == 200:
+            token_data = response.json()
+            access_token = token_data['access_token']
+            refresh_token = token_data['refresh_token']
+            return access_token, refresh_token
+        else:
+            print(f"Token exchange failed with status code {response.status_code}")
+            return None, None
+
+    @commands.command()
+    async def trakt_connected(self, ctx):
+        try:
+            await self.initialize_trakt_client()
+            user = self.trakt_client.users("me").get()
+            await ctx.send("Trakt is connected and credentials are valid.")
+        except Exception as e:
+            await ctx.send(str(e))
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
