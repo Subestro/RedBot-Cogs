@@ -83,6 +83,7 @@ class rTrakt(commands.Cog):
         try:
             await self.initialize_trakt_client()
             self.check_task = self.bot.loop.create_task(self.check_scrobbler())
+            await self.check_scrobbler()  # Start checking immediately after loading the cog
         except commands.CommandError as e:
             print(e)
 
