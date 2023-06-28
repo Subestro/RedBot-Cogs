@@ -8,9 +8,14 @@ class rTrakt(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567000)  # Replace with a unique identifier
-        self.config.register_global(client_id=None, client_secret=None, access_token=None, refresh_token=None)
+        self.config.register_global(
+            client_id=None,
+            client_secret=None,
+            access_token=None,
+            refresh_token=None,
+            channel_id=None
+        )
         self.trakt_client = None
-        self.channel_id = None
         self.check_task = None
 
     async def initialize_trakt_client(self):
@@ -44,7 +49,8 @@ class rTrakt(commands.Cog):
                     await self.send_watching_info(watching)
             except Exception as e:
                 error_message = f"An error occurred while checking the watching status: {str(e)}"
-                channel = self.bot.get_channel(self.channel_id)
+                channel_id = await self.config.channel_id()
+                channel = self.bot.get_channel(channel_id)
                 if channel is not None:
                     await channel.send(error_message)
                 else:
@@ -74,8 +80,9 @@ class rTrakt(commands.Cog):
         else:
             media_title = "Unknown"
 
-        if media_title and self.channel_id is not None:
-            channel = self.bot.get_channel(self.channel_id)
+        channel_id = await self.config.channel_id()
+        channel = self.bot.get_channel(channel_id)
+        if media_title and channel is not None:
             await channel.send(f"I'm currently watching: {media_title}")
 
     @commands.Cog.listener()
@@ -132,7 +139,7 @@ class rTrakt(commands.Cog):
 
     @commands.command()
     async def set_watching_channel(self, ctx, channel: discord.TextChannel):
-        self.channel_id = channel.id
+        await self.config.channel_id.set(channel.id)
         await ctx.send(f"The channel has been set to: {channel.mention}")
 
 def setup(bot):
