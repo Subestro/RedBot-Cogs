@@ -125,9 +125,9 @@ class rTrakt(commands.Cog):
             return None, None
 
     @commands.command()
-    async def set_watching_channel(self, ctx, channel_id):
-        self.channel_id = int(channel_id)
-        await ctx.send(f"The channel has been set to: {self.channel_id}")
+    async def set_watching_channel(self, ctx, channel: discord.TextChannel):
+        self.channel_id = channel.id
+        await ctx.send(f"The channel has been set to: {channel.mention}")
 
 def setup(bot):
     bot.add_cog(rTrakt(bot))
