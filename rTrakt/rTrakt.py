@@ -43,7 +43,12 @@ class rTrakt(commands.Cog):
                 if watching is not None:
                     await self.send_watching_info(watching)
             except Exception as e:
-                print(str(e))
+                error_message = f"An error occurred while checking the watching status: {str(e)}"
+                channel = self.bot.get_channel(self.channel_id)
+                if channel is not None:
+                    await channel.send(error_message)
+                else:
+                    print(error_message)
             await asyncio.sleep(5)
 
     async def get_watching_status(self, user):
