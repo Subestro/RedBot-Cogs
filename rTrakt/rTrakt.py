@@ -77,8 +77,12 @@ class rTrakt(commands.Cog):
             await self.config.refresh_token.set(refresh_token)
             await ctx.send("Trakt tokens have been set.")
 
+    @commands.command()
+    @commands.is_owner()
+    async def set_channel(self, ctx, channel: discord.TextChannel):
+        await self.config.channel_id.set(channel.id)
+        await ctx.send(f"Watching status messages will be sent to {channel.mention}")
+
 def setup(bot):
     cog = rTrakt(bot)
     bot.add_cog(cog)
-
-
