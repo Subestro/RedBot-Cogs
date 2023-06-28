@@ -81,14 +81,5 @@ class rTrakt(commands.Cog):
             print(f"Token exchange failed with status code {response.status_code}")
             return None, None
 
-    @commands.command()
-    async def trakt_connected(self, ctx):
-        try:
-            await self.initialize_trakt_client()
-            user = self.trakt_client.users("me").get()
-            await ctx.send("Trakt is connected and credentials are valid.")
-        except Exception as e:
-            await ctx.send(str(e))
-
 def setup(bot):
     bot.add_cog(rTrakt(bot))
