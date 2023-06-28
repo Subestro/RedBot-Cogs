@@ -47,6 +47,7 @@ class rTrakt(commands.Cog):
             await asyncio.sleep(5)
 
     async def get_watching_status(self, user):
+        client_id = await self.config.client_id()
         headers = {
             'Content-Type': 'application/json',
             'trakt-api-version': '2',
